@@ -111,14 +111,17 @@ def descargar_dia(dia, sesion):
             ultimo_error = f"sin respuesta ({e.__class__.__name__}: {e})"
         else:
             if r.status_code == 404:
+                print(f"  {nombre}: OMIE responde 404 (no existe)")
                 return None
             if r.status_code == 200:
                 texto = r.content.decode("latin-1")
                 if not texto.strip():
+                    print(f"  {nombre}: OMIE devuelve un fichero vacío")
                     return None  # OMIE a veces devuelve vacío si no existe
                 if not texto.lstrip().upper().startswith("MARGINALPDBC"):
                     # Página HTML en vez del fichero: lo tratamos como "no publicado"
                     if "<html" in texto[:500].lower():
+                        print(f"  {nombre}: OMIE devuelve una página HTML en vez del fichero")
                         return None
                 leer_fichero_omie(texto, dia)  # valida antes de guardar
                 CARPETA_DATOS.mkdir(exist_ok=True)
