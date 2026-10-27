@@ -180,6 +180,14 @@ summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
   font-weight: 600; padding: 10px 18px; border-radius: 10px;
 }
 .boton:hover { filter: brightness(1.08); }
+button.boton { border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+.cabecera-der { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.formulario { margin-top: 16px; }
+.formulario iframe {
+  display: block; width: 100%; height: 900px; border: 1px solid var(--border);
+  border-radius: 12px; background: #fff;
+}
+.formulario .sub { margin-top: 8px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chip { border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 0.88rem; background: var(--page); }
 
@@ -213,8 +221,9 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
       <div class="marca">⚡ OMIEporra · mercado diario de OMIE (España)</div>
       <h1 id="titulo">OMIEporra</h1>
     </div>
-    <div>
+    <div class="cabecera-der">
       <span class="pill" id="estado"><span class="punto"></span><span></span></span>
+      <a class="boton" id="cta" href="#bloque-proximo" hidden></a>
     </div>
   </header>
 
@@ -257,7 +266,12 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
         <h2 id="h-proximo"></h2>
         <p class="sub" id="cuenta-atras"></p>
       </div>
-      <a class="boton" id="boton-apostar" target="_blank" rel="noopener" hidden>Apostar ahora</a>
+      <button type="button" class="boton" id="boton-apostar" aria-expanded="false" aria-controls="formulario" hidden>Apostar ahora</button>
+    </div>
+    <div class="formulario" id="formulario" hidden>
+      <iframe title="Formulario de apuestas" loading="lazy"></iframe>
+      <p class="sub">¿No se ve bien? <a id="formulario-fuera" target="_blank" rel="noopener">Abre el formulario en otra pestaña</a>.
+        Tu nombre aparecerá en la lista en la próxima actualización de la web (cada día sobre las 15:00).</p>
     </div>
     <div class="chips" id="apostantes"></div>
   </section>
@@ -580,7 +594,25 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     const mesProximo = MESES[Number(D.proximo.split("-")[1]) - 1];
     $("cuenta-atras").textContent = "Se cierran el 1 de " + mesProximo + " a las 00:00 (hora de Madrid) · quedan " +
       (d ? d + (d === 1 ? " día y " : " días y ") : "") + h + (h === 1 ? " hora" : " horas") + ".";
-    if (D.formulario) { const b = $("boton-apostar"); b.href = D.formulario; b.hidden = false; }
+    if (D.formulario) {
+      const b = $("boton-apostar"), caja = $("formulario"), marco = caja.querySelector("iframe");
+      const incrustado = new URL(D.formulario);
+      incrustado.searchParams.delete("usp");
+      incrustado.searchParams.set("embedded", "true");
+      $("formulario-fuera").href = D.formulario;
+      b.hidden = false;
+      b.addEventListener("click", () => {
+        const abrir = caja.hidden;
+        if (abrir && !marco.src) marco.src = incrustado.href;
+        caja.hidden = !abrir;
+        b.setAttribute("aria-expanded", String(abrir));
+        b.textContent = abrir ? "Cerrar formulario" : "Apostar ahora";
+      });
+      const cta = $("cta");
+      cta.textContent = "Apostar para " + D.proximo_nombre;
+      cta.hidden = false;
+      cta.addEventListener("click", () => { if (caja.hidden) b.click(); });
+    }
   } else {
     $("cuenta-atras").textContent = "Las apuestas ya están cerradas.";
   }

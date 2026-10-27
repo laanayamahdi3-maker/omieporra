@@ -32,7 +32,7 @@ El programa lee las respuestas solo, cada día. Reglas:
 2. Pestaña **Respuestas → Vincular con Hojas de cálculo** → *Crear una hoja de cálculo nueva*.
 3. En la hoja: **Archivo → Compartir → Publicar en la Web** → elige la hoja de respuestas y el formato **Valores separados por comas (.csv)** → **Publicar** → copia el enlace.
 4. Pon ese enlace en `.github/workflows/omieporra.yml`, en la línea `APUESTAS_URL: ""` (entre las comillas).
-5. Opcional: pon el enlace para **rellenar** el formulario (botón *Enviar → 🔗* del formulario) en la línea `FORMULARIO_URL: ""`. Así la web muestra un botón **Apostar ahora**.
+5. Pon el enlace para **rellenar** el formulario (botón *Enviar → 🔗* del formulario) en la línea `FORMULARIO_URL: ""`. Así la web muestra el formulario dentro de la página (botón **Apostar ahora**) mientras las apuestas están abiertas.
 
 Cada mes solo tienes que añadir al desplegable "Mes" el mes siguiente.
 
