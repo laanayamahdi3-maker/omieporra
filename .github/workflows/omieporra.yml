@@ -49,6 +49,9 @@ jobs:
       - name: Calcular OMIEporra
         env:
           MES: ${{ inputs.mes }}
+          # Enlace CSV de la hoja de respuestas del Google Form.
+          # Vacío = se usan las apuestas de apuestas.csv
+          APUESTAS_URL: ""
         run: python omieporra.py "$MES"
 
       - name: Guardar resultados en el repositorio
