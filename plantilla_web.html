@@ -617,12 +617,67 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     $("cuenta-atras").textContent = "Las apuestas ya están cerradas.";
   }
   const chips = $("apostantes");
-  if (D.apostantes_proximo.length) {
-    chips.before(el("p", "sub", "Ya han apostado (" + D.apostantes_proximo.length + "). Las cifras se verán cuando empiece el mes:"));
-    D.apostantes_proximo.forEach((n) => chips.append(el("span", "chip", n)));
+  const AP = [...D.apuestas_proximo].sort((a, b) => a.apuesta - b.apuesta || a.nombre.localeCompare(b.nombre, "es"));
+  const ult7 = dias.slice(-7);
+  const media7 = ult7.reduce((t, d) => t + d.precio, 0) / ult7.length;
+  let svgProx = null;
+  if (AP.length) {
+    chips.before(el("p", "sub", "Ya han apostado " + AP.length + (AP.length === 1 ? " persona" : " personas") +
+      ". Así quedan frente a lo que está pasando en " + D.mes_nombre.toLowerCase() + ":"));
+    const ley = el("div", "leyenda");
+    const k = (color, texto, linea) => { const sp = el("span"); const i = el("i", linea ? "linea" : null); i.style.background = color; sp.append(i, texto); ley.append(sp); };
+    k("var(--apuesta)", "Apuesta", false);
+    k("var(--media)", "Media de " + D.mes_nombre.split(" ")[0].toLowerCase() + " (" + eur(D.media) + ")", true);
+    k("var(--muted)", "Media de los últimos 7 días (" + eur(media7) + ")", true);
+    chips.before(ley);
+    chips.classList.add("grafica");
   } else {
     chips.append(el("p", "sub", "Todavía no ha apostado nadie. ¡Sé el primero!"));
   }
+
+  // Una fila por apuesta, con dos líneas de referencia
+  function dibujarProximo() {
+    if (!AP.length) return;
+    if (svgProx) svgProx.remove();
+    const W = chips.clientWidth;
+    const fila = 30;
+    const m = { l: Math.min(170, Math.max(90, W * 0.3)), r: 64, t: 8, b: 26 };
+    const H = m.t + m.b + fila * AP.length;
+    const iw = W - m.l - m.r;
+    const valores = AP.map((a) => a.apuesta).concat([D.media, media7]);
+    const lo = Math.min(...valores), hi = Math.max(...valores), margen = Math.max(5, (hi - lo) * 0.08);
+    const ticks = pasos(Math.max(0, lo - margen), hi + margen, W < 500 ? 3 : 5);
+    const x0 = ticks[0], x1 = ticks[ticks.length - 1];
+    const x = (v) => m.l + (v - x0) / (x1 - x0) * iw;
+    svgProx = s("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img",
+                         "aria-label": "Apuestas para " + D.proximo_nombre + " comparadas con la media actual" });
+    chips.append(svgProx);
+    ticks.forEach((v) => {
+      s("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, stroke: "var(--grid)", "stroke-width": 1 }, svgProx);
+      const t = s("text", { x: x(v), y: H - 8, "text-anchor": "middle", fill: "var(--muted)", "font-size": 12, class: "num" }, svgProx);
+      t.textContent = v.toLocaleString("es-ES");
+    });
+    [[media7, "var(--muted)"], [D.media, "var(--media)"]].forEach(([v, color]) =>
+      s("line", { x1: x(v), x2: x(v), y1: m.t, y2: H - m.b, stroke: color, "stroke-width": 2, "stroke-linecap": "round" }, svgProx));
+    AP.forEach((a, i) => {
+      const cy = m.t + fila * i + fila / 2;
+      const g = s("g", {}, svgProx);
+      const titulo = s("title", {}, g);
+      titulo.textContent = a.nombre + ": " + eur(a.apuesta) + " €/MWh";
+      s("rect", { x: 0, y: cy - fila / 2, width: W, height: fila, fill: "transparent" }, g);
+      const nom = s("text", { x: m.l - 10, y: cy + 4, "text-anchor": "end", fill: "var(--ink)", "font-size": 13 }, g);
+      // Recorta el nombre con "…" si no cabe en el margen izquierdo
+      nom.textContent = a.nombre;
+      for (let n = a.nombre.length - 1; n > 3 && nom.getComputedTextLength() > m.l - 16; n--) {
+        nom.textContent = a.nombre.slice(0, n) + "…";
+      }
+      s("line", { x1: m.l, x2: m.l + iw, y1: cy, y2: cy, stroke: "var(--grid)", "stroke-width": 1 }, g);
+      s("circle", { cx: x(a.apuesta), cy, r: 5, fill: "var(--apuesta)", stroke: "var(--surface)", "stroke-width": 2 }, g);
+      const val = s("text", { x: m.l + iw + 8, y: cy + 4, fill: "var(--ink-2)", "font-size": 12, class: "num" }, g);
+      val.textContent = eur(a.apuesta);
+    });
+  }
+  dibujarProximo();
 
   // ---------- Historial
   D.historial.forEach((h) => {
@@ -639,7 +694,7 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
 
   seleccionar(leer("omieporra-nombre"));
   let ancho = caja.clientWidth;
-  window.addEventListener("resize", () => { if (caja.clientWidth !== ancho) { ancho = caja.clientWidth; dibujar(); } });
+  window.addEventListener("resize", () => { if (caja.clientWidth !== ancho) { ancho = caja.clientWidth; dibujar(); dibujarProximo(); } });
 })();
 </script>
 </body>

@@ -22,7 +22,7 @@ Cada uno rellena el formulario de Google con su **nombre**, el **mes** por el qu
 El programa lee las respuestas solo, cada día. Reglas:
 - Una apuesta para un mes **solo cuenta si se envía antes del día 1** de ese mes.
 - Si alguien apuesta varias veces para el mismo mes, **cuenta la última**.
-- En la web se ve quién ha apostado ya para el mes siguiente, pero sin las cifras, hasta que empieza el mes.
+- En la web se ven ya las apuestas para el mes siguiente (nombre y cifra), comparadas con la media del mes actual y la de los últimos 7 días.
 
 ### Crear el formulario (una sola vez)
 1. En [Google Forms](https://forms.google.com) crea un formulario con 3 preguntas obligatorias:

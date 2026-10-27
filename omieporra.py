@@ -406,7 +406,7 @@ def guardar_resultado(tabla_ranking, tabla_datos, etiqueta, ahora):
     return resultado
 
 
-def pagina_web(resultado, proximo, apostantes_proximo, carpeta=Path("web")):
+def pagina_web(resultado, proximo, apuestas_proximo, carpeta=Path("web")):
     """Crea web/index.html (para GitHub Pages) a partir de plantilla_web.html,
     y copia ahí las gráficas y Excels de todos los meses."""
     carpeta.mkdir(exist_ok=True)
@@ -437,7 +437,10 @@ def pagina_web(resultado, proximo, apostantes_proximo, carpeta=Path("web")):
         "proximo": proximo,
         "proximo_nombre": nombre_mes(proximo),
         "cierre_proximo": datetime(anio, mes, 1, tzinfo=ZONA).isoformat(),
-        "apostantes_proximo": apostantes_proximo,
+        "apuestas_proximo": [
+            {"nombre": str(f["nombre"]), "apuesta": float(f["prediccion"])}
+            for _, f in apuestas_proximo.iterrows()
+        ],
         "formulario": URL_FORMULARIO_APOSTAR,
         "historial": historial,
     })
@@ -464,14 +467,14 @@ def main():
     print(f"OMIEporra {etiqueta} (hoy {ahora:%Y-%m-%d %H:%M} hora de Madrid)")
 
     proximo = f"{anio + mes // 12}-{mes % 12 + 1:02d}"
-    apostantes_proximo = []
+    apuestas_proximo = pd.DataFrame(columns=["nombre", "prediccion"])
     apuestas = pd.DataFrame()
     if URL_FORMULARIO:
         formulario = leer_formulario(URL_FORMULARIO)
         apuestas = apuestas_del_mes(formulario, etiqueta)
-        apostantes_proximo = sorted(apuestas_del_mes(formulario, proximo)["nombre"], key=str.lower)
+        apuestas_proximo = apuestas_del_mes(formulario, proximo)
         print(f"Formulario: {len(apuestas)} apuestas para {etiqueta}, "
-              f"{len(apostantes_proximo)} para {proximo}")
+              f"{len(apuestas_proximo)} para {proximo}")
     if apuestas.empty:
         print("Uso las apuestas de apuestas.csv")
         apuestas = leer_apuestas()
@@ -486,7 +489,7 @@ def main():
     grafica(tabla, apuestas, etiqueta, png)
     excel(tabla_ranking, tabla, png, xlsx)
     resultado = guardar_resultado(tabla_ranking, tabla, etiqueta, ahora)
-    pagina_web(resultado, proximo, apostantes_proximo)
+    pagina_web(resultado, proximo, apuestas_proximo)
 
     print(f"\nDías con datos: {len(tabla)} (último: {tabla['Fecha'].iloc[-1]})")
     print(f"Media acumulada: {media:.2f} €/MWh\n")
