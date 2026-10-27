@@ -41,6 +41,8 @@ jobs:
           MES: ${{ inputs.mes }}
           # Enlace CSV de la hoja de respuestas del Google Form.
           # Vacío = se usan las apuestas de apuestas.csv
+          # Enlace para rellenar el formulario (botón "Apostar ahora" de la web)
+          FORMULARIO_URL: ""
           APUESTAS_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuL94ClHtQa6mIYAB82Py-cRXNhibTOVX5oyCorTFjdiL-E3R2aOtykFtmvy7isbFld9Hz7595BbiT/pub?gid=1666321972&single=true&output=csv"
         run: python omieporra.py "$MES"
 
@@ -48,7 +50,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add datos omieporra_*.xlsx omieporra_*.png
+          git add datos resultados omieporra_*.xlsx omieporra_*.png
           if git diff --cached --quiet; then
             echo "No hay cambios que guardar."
           else

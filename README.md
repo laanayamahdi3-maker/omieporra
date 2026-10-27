@@ -7,12 +7,14 @@ Este repositorio descarga solo los datos de OMIE todos los días, calcula la med
 
 | Archivo | Para qué sirve |
 |---|---|
-| `apuestas.csv` | Las apuestas del mes (lo cambias tú cada mes). |
+| `apuestas.csv` | Reserva: apuestas a mano, solo si un mes no tiene apuestas en el formulario. |
 | `omieporra.py` | El programa que descarga OMIE y calcula todo. |
 | `requirements.txt` | Librerías de Python que necesita el programa. |
 | `.github/workflows/omieporra.yml` | La "tarea automática" de GitHub Actions: se ejecuta cada día a las 14:00 UTC (15:00 en invierno / 16:00 en verano, hora de España). |
 | `datos/` | Ficheros originales de OMIE descargados (uno por día). |
 | `omieporra_AAAA-MM.xlsx` / `.png` | Los resultados de cada mes. |
+| `resultados/AAAA-MM.json` | Resumen de cada mes que usa la web (historial). |
+| `plantilla_web.html` | El diseño de la página web. |
 
 ## Cómo apuesta cada compañero (Google Forms)
 
@@ -30,6 +32,7 @@ El programa lee las respuestas solo, cada día. Reglas:
 2. Pestaña **Respuestas → Vincular con Hojas de cálculo** → *Crear una hoja de cálculo nueva*.
 3. En la hoja: **Archivo → Compartir → Publicar en la Web** → elige la hoja de respuestas y el formato **Valores separados por comas (.csv)** → **Publicar** → copia el enlace.
 4. Pon ese enlace en `.github/workflows/omieporra.yml`, en la línea `APUESTAS_URL: ""` (entre las comillas).
+5. Opcional: pon el enlace para **rellenar** el formulario (botón *Enviar → 🔗* del formulario) en la línea `FORMULARIO_URL: ""`. Así la web muestra un botón **Apostar ahora**.
 
 Cada mes solo tienes que añadir al desplegable "Mes" el mes siguiente.
 

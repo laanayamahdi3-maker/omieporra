@@ -8,7 +8,8 @@ Uso:
 Genera:
     omieporra_AAAA-MM.xlsx  (hojas "Ranking" y "Datos OMIE")
     omieporra_AAAA-MM.png   (gráfica)
-    web/index.html          (página para GitHub Pages)
+    resultados/AAAA-MM.json (resumen del mes para la web)
+    web/index.html          (página para GitHub Pages, desde plantilla_web.html)
 
 Si OMIE no responde, si un fichero tiene un formato raro o si faltan datos que
 ya deberían estar publicados, el script termina con error (código 1) y explica
@@ -16,8 +17,8 @@ el motivo, para que GitHub Actions marque la ejecución en rojo.
 """
 
 import calendar
-import html
 import io
+import json
 import os
 import re
 import sys
@@ -43,6 +44,10 @@ CARPETA_DATOS = Path("datos")
 FICHERO_APUESTAS = Path("apuestas.csv")
 # Enlace CSV de la hoja de respuestas del Google Form (se configura en el workflow).
 URL_FORMULARIO = os.environ.get("APUESTAS_URL", "").strip()
+# Enlace para rellenar el formulario (botón "Apostar ahora" de la web). Opcional.
+URL_FORMULARIO_APOSTAR = os.environ.get("FORMULARIO_URL", "").strip()
+CARPETA_RESULTADOS = Path("resultados")
+PLANTILLA_WEB = Path("plantilla_web.html")
 ZONA = ZoneInfo("Europe/Madrid")
 INTENTOS = 4
 
@@ -295,9 +300,7 @@ def leer_apuestas():
             "Hay apuestas que no son un número en apuestas.csv: "
             + ", ".join(malas["nombre"].fillna("(sin nombre)"))
         )
-    if df.empty:
-        raise ErrorOmie("apuestas.csv no tiene ninguna apuesta.")
-    return df
+    return df  # puede estar vacía: entonces el mes sale "sin apuestas"
 
 
 def ranking(apuestas, media):
@@ -316,25 +319,28 @@ def ranking(apuestas, media):
 def grafica(tabla, apuestas, etiqueta_mes, fichero):
     fig, ax = plt.subplots(figsize=(11, 6))
     fechas = pd.to_datetime(tabla["Fecha"])
-    ax.plot(fechas, tabla["Precio medio diario (€/MWh)"], marker="o", ms=4,
-            color="#9aa5b1", label="Precio medio diario")
-    ax.plot(fechas, tabla["Media acumulada (€/MWh)"], lw=3, color="#d1495b",
+    ax.bar(fechas, tabla["Precio medio diario (€/MWh)"], width=0.7, color="#c3c2b7",
+           label="Precio medio diario")
+    ax.plot(fechas, tabla["Media acumulada (€/MWh)"], lw=2.5, color="#2a78d6",
             label="Media acumulada del mes")
 
     anio, mes = map(int, etiqueta_mes.split("-"))
     inicio = pd.Timestamp(anio, mes, 1)
     fin = pd.Timestamp(anio, mes, calendar.monthrange(anio, mes)[1])
     for _, fila in apuestas.iterrows():
-        ax.axhline(fila["prediccion"], color="#2e86ab", lw=0.8, ls="--", alpha=0.7)
+        ax.axhline(fila["prediccion"], color="#eb6834", lw=0.8, alpha=0.6)
         ax.annotate(f"{fila['nombre']} ({fila['prediccion']:g})",
                     xy=(fin, fila["prediccion"]), xytext=(4, 0),
-                    textcoords="offset points", va="center", fontsize=8, color="#2e86ab")
+                    textcoords="offset points", va="center", fontsize=8, color="#52514e")
 
     ax.set_xlim(inicio - pd.Timedelta(days=0.5), fin + pd.Timedelta(days=0.5))
     ax.set_title(f"OMIEporra {etiqueta_mes} · media acumulada: "
                  f"{tabla['Media acumulada (€/MWh)'].iloc[-1]:.2f} €/MWh")
     ax.set_ylabel("€/MWh")
-    ax.grid(alpha=0.3)
+    ax.grid(axis="y", color="#e1e0d9")
+    ax.set_axisbelow(True)
+    for lado in ("top", "right"):
+        ax.spines[lado].set_visible(False)
     ax.legend(loc="upper left")
     fig.autofmt_xdate()
     fig.tight_layout()
@@ -357,70 +363,88 @@ def excel(tabla_ranking, tabla_datos, imagen, fichero):
     libro.save(fichero)
 
 
-def pagina_web(tabla_ranking, tabla_datos, etiqueta, proximo, apostantes_proximo,
-               carpeta=Path("web")):
-    """Crea web/index.html (para GitHub Pages) con el ranking y la gráfica del mes,
+def nombre_mes(etiqueta):
+    anio, mes = map(int, etiqueta.split("-"))
+    return f"{MESES[mes - 1].capitalize()} {anio}"
+
+
+def guardar_resultado(tabla_ranking, tabla_datos, etiqueta, ahora):
+    """Guarda resultados/AAAA-MM.json: lo usa la web para el historial."""
+    anio, mes = map(int, etiqueta.split("-"))
+    dias_mes = calendar.monthrange(anio, mes)[1]
+    resultado = {
+        "mes": etiqueta,
+        "mes_nombre": nombre_mes(etiqueta),
+        "dias_mes": dias_mes,
+        "final": tabla_datos["Fecha"].iloc[-1] == date(anio, mes, dias_mes),
+        "actualizado": ahora.strftime("%d/%m/%Y %H:%M"),
+        "media": round(float(tabla_datos["Media acumulada (€/MWh)"].iloc[-1]), 2),
+        "dias": [
+            {
+                "fecha": f["Fecha"].isoformat(),
+                "periodos": int(f["Periodos"]),
+                "precio": float(f["Precio medio diario (€/MWh)"]),
+                "media": float(f["Media acumulada (€/MWh)"]),
+                "min": float(f["Mínimo (€/MWh)"]),
+                "max": float(f["Máximo (€/MWh)"]),
+            }
+            for _, f in tabla_datos.iterrows()
+        ],
+        "ranking": [
+            {
+                "puesto": int(f["Puesto"]),
+                "nombre": str(f["Nombre"]),
+                "apuesta": float(f["Apuesta (€/MWh)"]),
+                "diferencia": float(f["Diferencia (€/MWh)"]),
+            }
+            for _, f in tabla_ranking.iterrows()
+        ],
+    }
+    CARPETA_RESULTADOS.mkdir(exist_ok=True)
+    (CARPETA_RESULTADOS / f"{etiqueta}.json").write_text(
+        json.dumps(resultado, ensure_ascii=False, indent=1), encoding="utf-8")
+    return resultado
+
+
+def pagina_web(resultado, proximo, apostantes_proximo, carpeta=Path("web")):
+    """Crea web/index.html (para GitHub Pages) a partir de plantilla_web.html,
     y copia ahí las gráficas y Excels de todos los meses."""
     carpeta.mkdir(exist_ok=True)
-    meses = sorted({p.stem.split("_")[1] for p in Path(".").glob("omieporra_*.png")}, reverse=True)
-    for mes in meses:
+    historial = []
+    for fichero in sorted(CARPETA_RESULTADOS.glob("*.json"), reverse=True):
+        r = json.loads(fichero.read_text(encoding="utf-8"))
+        if r["mes"] == resultado["mes"]:
+            r = resultado
         for ext in ("png", "xlsx"):
-            origen = Path(f"omieporra_{mes}.{ext}")
+            origen = Path(f"omieporra_{r['mes']}.{ext}")
             if origen.exists():
                 (carpeta / origen.name).write_bytes(origen.read_bytes())
+        ganador = r["ranking"][0] if r["ranking"] else None
+        historial.append({
+            "mes": r["mes"],
+            "mes_nombre": r["mes_nombre"],
+            "media": r["media"],
+            "final": r["final"],
+            "ganador": " / ".join(x["nombre"] for x in r["ranking"] if x["puesto"] == 1) or None,
+            "apuesta_ganador": ganador["apuesta"] if ganador else None,
+            "png": f"omieporra_{r['mes']}.png",
+            "xlsx": f"omieporra_{r['mes']}.xlsx",
+        })
 
-    def num(x):
-        return f"{x:.2f}".replace(".", ",")
-
-    filas = "\n".join(
-        f"<tr><td>{f['Puesto']}</td><td>{html.escape(str(f['Nombre']))}</td>"
-        f"<td>{num(f['Apuesta (€/MWh)'])}</td><td>{num(f['Diferencia (€/MWh)'])}</td></tr>"
-        for _, f in tabla_ranking.iterrows()
-    )
-    if apostantes_proximo:
-        nombres = ", ".join(html.escape(n) for n in apostantes_proximo)
-        proximas = (f"<p>Ya han apostado ({len(apostantes_proximo)}): {nombres}.<br>"
-                    "Las cifras se verán cuando empiece el mes.</p>")
-    else:
-        proximas = "<p>Todavía no ha apostado nadie.</p>"
-    otros = "\n".join(
-        f'<li>{m}: <a href="omieporra_{m}.png">gráfica</a> · <a href="omieporra_{m}.xlsx">Excel</a></li>'
-        for m in meses
-    )
-    media = tabla_datos["Media acumulada (€/MWh)"].iloc[-1]
-    ultimo = tabla_datos["Fecha"].iloc[-1]
-    actualizado = datetime.now(ZONA).strftime("%d/%m/%Y %H:%M")
-    (carpeta / "index.html").write_text(f"""<!doctype html>
-<html lang="es"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OMIEporra {etiqueta}</title>
-<style>
-body {{ font-family: system-ui, sans-serif; max-width: 960px; margin: 0 auto; padding: 16px; color: #1f2933; background: #fff; }}
-h1 {{ margin-bottom: 0; }} .sub {{ color: #616e7c; margin-top: 4px; }}
-.media {{ font-size: 1.4em; margin: 16px 0; }} .media b {{ color: #d1495b; }}
-table {{ border-collapse: collapse; width: 100%; margin: 16px 0; }}
-th, td {{ padding: 6px 10px; border-bottom: 1px solid #e4e7eb; text-align: right; }}
-th:nth-child(2), td:nth-child(2) {{ text-align: left; }}
-tbody tr:first-child {{ background: #fff4d6; font-weight: bold; }}
-img {{ max-width: 100%; height: auto; }}
-</style></head><body>
-<h1>⚡ OMIEporra {etiqueta}</h1>
-<p class="sub">Datos hasta el {ultimo:%d/%m/%Y} · actualizado el {actualizado} (hora de Madrid)</p>
-<p class="media">Media acumulada del mes: <b>{num(media)} €/MWh</b></p>
-<table><thead><tr><th>Puesto</th><th>Nombre</th><th>Apuesta (€/MWh)</th><th>Diferencia (€/MWh)</th></tr></thead>
-<tbody>
-{filas}
-</tbody></table>
-<img src="omieporra_{etiqueta}.png" alt="Gráfica OMIEporra {etiqueta}">
-<h2>Apuestas para {proximo}</h2>
-{proximas}
-<h2>Todos los meses</h2>
-<ul>
-{otros}
-</ul>
-<p class="sub">Fuente: OMIE, mercado diario, precio marginal de España.</p>
-</body></html>
-""", encoding="utf-8")
+    anio, mes = map(int, proximo.split("-"))
+    datos = dict(resultado)
+    datos.update({
+        "proximo": proximo,
+        "proximo_nombre": nombre_mes(proximo),
+        "cierre_proximo": datetime(anio, mes, 1, tzinfo=ZONA).isoformat(),
+        "apostantes_proximo": apostantes_proximo,
+        "formulario": URL_FORMULARIO_APOSTAR,
+        "historial": historial,
+    })
+    # "<\/" evita que un nombre con "</script>" rompa la página
+    json_datos = json.dumps(datos, ensure_ascii=False).replace("</", "<\\/")
+    plantilla = PLANTILLA_WEB.read_text(encoding="utf-8")
+    (carpeta / "index.html").write_text(plantilla.replace("/*__DATOS__*/", json_datos), encoding="utf-8")
 
 
 # ---------------------------------------------------------------- principal
@@ -461,7 +485,8 @@ def main():
     xlsx = Path(f"omieporra_{etiqueta}.xlsx")
     grafica(tabla, apuestas, etiqueta, png)
     excel(tabla_ranking, tabla, png, xlsx)
-    pagina_web(tabla_ranking, tabla, etiqueta, proximo, apostantes_proximo)
+    resultado = guardar_resultado(tabla_ranking, tabla, etiqueta, ahora)
+    pagina_web(resultado, proximo, apostantes_proximo)
 
     print(f"\nDías con datos: {len(tabla)} (último: {tabla['Fecha'].iloc[-1]})")
     print(f"Media acumulada: {media:.2f} €/MWh\n")
