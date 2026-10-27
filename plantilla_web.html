@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMIEporra</title>
+<meta name="description" content="La porra de clase sobre el precio medio mensual del mercado diario de OMIE">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --wash: rgba(11, 11, 11, 0.04);
+  --bar: #c3c2b7;
+  --media: #2a78d6;
+  --apuesta: #eb6834;
+  --abajo: #2a78d6;
+  --arriba: #e34948;
+  --sel: rgba(235, 104, 52, 0.10);
+  --good: #006300;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --wash: rgba(255, 255, 255, 0.05);
+    --bar: #4a4a46;
+    --media: #3987e5;
+    --apuesta: #d95926;
+    --abajo: #3987e5;
+    --arriba: #e66767;
+    --sel: rgba(217, 89, 38, 0.16);
+    --good: #0ca30c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --wash: rgba(255, 255, 255, 0.05);
+  --bar: #4a4a46;
+  --media: #3987e5;
+  --apuesta: #d95926;
+  --abajo: #3987e5;
+  --arriba: #e66767;
+  --sel: rgba(217, 89, 38, 0.16);
+  --good: #0ca30c;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+a { color: var(--media); }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 16px;
+}
+h2 { font-size: 1.15rem; margin: 0; }
+.sub { color: var(--ink-2); font-size: 0.9rem; margin: 2px 0 0; }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Cabecera */
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.marca { color: var(--ink-2); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.02em; }
+h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); line-height: 1.1; margin: 4px 0 0; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 4px 12px; font-size: 0.85rem; color: var(--ink-2); background: var(--surface);
+}
+.pill .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--apuesta); }
+.pill.final .punto { background: var(--good); }
+
+/* Cifra principal y fichas */
+.hero { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr); gap: 20px; align-items: center; }
+.hero-label { color: var(--ink-2); font-size: 0.95rem; }
+.hero-valor { font-size: clamp(2.8rem, 9vw, 3.8rem); font-weight: 650; line-height: 1.05; letter-spacing: -0.02em; }
+.hero-valor small { font-size: 0.35em; font-weight: 500; color: var(--ink-2); letter-spacing: 0; }
+.progreso { margin-top: 10px; height: 6px; border-radius: 3px; background: var(--grid); overflow: hidden; }
+.progreso div { height: 100%; background: var(--media); border-radius: 3px; }
+.fichas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.ficha { border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.ficha .l { color: var(--ink-2); font-size: 0.82rem; }
+.ficha .v { font-size: 1.25rem; font-weight: 600; }
+.ficha .v small { font-size: 0.7em; font-weight: 400; color: var(--ink-2); }
+
+/* Tu resultado */
+.yo { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.yo label { font-weight: 600; }
+select {
+  font: inherit; color: var(--ink); background: var(--page);
+  border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; min-width: 220px; max-width: 100%;
+}
+.yo-texto { flex-basis: 100%; color: var(--ink-2); min-height: 1.5em; }
+.yo-texto b { color: var(--ink); }
+
+/* Podio */
+.podio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.podio .p { border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; background: var(--page); }
+.podio .p.primero { background: var(--wash); }
+.podio .medalla { font-size: 1.8rem; line-height: 1; }
+.podio .n { font-weight: 600; margin-top: 6px; overflow-wrap: anywhere; }
+.podio .d { color: var(--ink-2); font-size: 0.88rem; }
+
+/* Tabla de clasificación */
+.tabla-scroll { overflow-x: auto; margin-top: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 9px 8px; border-bottom: 1px solid var(--grid); text-align: left; }
+th { color: var(--muted); font-weight: 500; font-size: 0.82rem; }
+td.r, th.r { text-align: right; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--wash); }
+tbody tr.sel { background: var(--sel); }
+tbody tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--apuesta); }
+.dif { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+.barra { position: relative; width: 120px; height: 14px; flex: none; }
+.barra::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--axis); }
+.barra span { position: absolute; top: 3px; height: 8px; }
+.barra span.abajo { right: 50%; background: var(--abajo); border-radius: 4px 0 0 4px; }
+.barra span.arriba { left: 50%; background: var(--arriba); border-radius: 0 4px 4px 0; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--ink-2); font-size: 0.85rem; margin-top: 10px; }
+.leyenda i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.leyenda i.linea { height: 2px; border-radius: 1px; width: 16px; }
+.vacio { text-align: center; padding: 28px 12px; color: var(--ink-2); }
+.vacio .icono { font-size: 2rem; }
+
+/* Gráfica */
+.grafica { position: relative; margin-top: 12px; touch-action: pan-y; }
+.grafica svg { display: block; width: 100%; overflow: visible; }
+.grafica svg:focus { outline: none; }
+.grafica svg:focus-visible { outline: 2px solid var(--media); outline-offset: 4px; border-radius: 4px; }
+.tooltip {
+  position: absolute; pointer-events: none; z-index: 2;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 8px 10px; font-size: 0.85rem; min-width: 170px; display: none;
+}
+.tooltip .t { color: var(--ink-2); margin-bottom: 4px; }
+.tooltip .fila { display: flex; align-items: center; gap: 8px; }
+.tooltip .fila b { font-variant-numeric: tabular-nums; }
+.tooltip .fila span { color: var(--ink-2); }
+.tooltip .key { width: 12px; height: 2px; border-radius: 1px; flex: none; }
+details { margin-top: 12px; }
+summary { cursor: pointer; color: var(--ink-2); font-size: 0.9rem; }
+
+/* Próximo mes */
+.proximo { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+.boton {
+  display: inline-block; background: var(--media); color: #fff; text-decoration: none;
+  font-weight: 600; padding: 10px 18px; border-radius: 10px;
+}
+.boton:hover { filter: brightness(1.08); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chip { border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 0.88rem; background: var(--page); }
+
+/* Historial */
+.meses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 12px; }
+.mes { border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: var(--page); }
+.mes .t { font-weight: 600; }
+.mes .m { font-size: 1.2rem; font-weight: 600; margin-top: 4px; }
+.mes .m small { font-size: 0.7em; font-weight: 400; color: var(--ink-2); }
+.mes .g { color: var(--ink-2); font-size: 0.88rem; margin-top: 4px; overflow-wrap: anywhere; }
+.mes .links { margin-top: 8px; font-size: 0.88rem; display: flex; gap: 12px; }
+
+footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 28px; }
+
+@media (max-width: 720px) {
+  .hero { grid-template-columns: 1fr; }
+  .card { padding: 16px; }
+  .barra { width: 64px; }
+  .ocultar-movil { display: none; }
+}
+@media (max-width: 420px) {
+  .podio { gap: 6px; }
+  .podio .p { padding: 10px 6px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="marca">⚡ OMIEporra · mercado diario de OMIE (España)</div>
+      <h1 id="titulo">OMIEporra</h1>
+    </div>
+    <div>
+      <span class="pill" id="estado"><span class="punto"></span><span></span></span>
+    </div>
+  </header>
+
+  <section class="card hero" aria-label="Resumen del mes">
+    <div>
+      <div class="hero-label" id="hero-label">Media del mes</div>
+      <div class="hero-valor" id="hero-valor"></div>
+      <div class="progreso" aria-hidden="true"><div id="progreso"></div></div>
+      <div class="sub" id="hero-sub"></div>
+    </div>
+    <div class="fichas" id="fichas"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-ranking">
+    <h2 id="h-ranking">Clasificación</h2>
+    <p class="sub">Gana quien más se acerque a la media del mes. La diferencia es apuesta − media.</p>
+    <div id="ranking"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-grafica">
+    <h2 id="h-grafica">Precio diario y media del mes</h2>
+    <p class="sub">Pasa el dedo o el ratón por la gráfica para ver cada día.</p>
+    <div class="leyenda" id="leyenda-grafica">
+      <span><i style="background: var(--bar)"></i>Precio medio diario</span>
+      <span><i class="linea" style="background: var(--media)"></i>Media acumulada del mes</span>
+      <span id="leyenda-apuesta" hidden><i class="linea" style="background: var(--apuesta)"></i><span></span></span>
+    </div>
+    <div class="grafica" id="grafica">
+      <div class="tooltip" id="tooltip" role="status"></div>
+    </div>
+    <details>
+      <summary>Ver los datos en una tabla</summary>
+      <div class="tabla-scroll"><table id="tabla-datos"></table></div>
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="h-proximo" id="bloque-proximo">
+    <div class="proximo">
+      <div>
+        <h2 id="h-proximo"></h2>
+        <p class="sub" id="cuenta-atras"></p>
+      </div>
+      <a class="boton" id="boton-apostar" target="_blank" rel="noopener" hidden>Apostar ahora</a>
+    </div>
+    <div class="chips" id="apostantes"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-historial">
+    <h2 id="h-historial">Todos los meses</h2>
+    <div class="meses" id="historial"></div>
+  </section>
+
+  <footer>
+    Datos: <a href="https://www.omie.es/" target="_blank" rel="noopener">OMIE</a>, precio marginal del mercado diario en España.
+    Se actualiza cada día de forma automática. <span id="actualizado"></span>
+  </footer>
+</div>
+
+<script id="datos" type="application/json">/*__DATOS__*/</script>
+<script>
+(function () {
+  "use strict";
+  const D = JSON.parse(document.getElementById("datos").textContent);
+  const $ = (id) => document.getElementById(id);
+  const f2 = new Intl.NumberFormat("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const eur = (v) => f2.format(v);
+  const signo = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + f2.format(Math.abs(v));
+  const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+                 "septiembre", "octubre", "noviembre", "diciembre"];
+  const fecha = (iso) => { const [a, m, d] = iso.split("-").map(Number); return d + " " + MESES[m - 1].slice(0, 3); };
+  const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const leer = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+  // ---------- Cabecera y resumen
+  document.title = "OMIEporra · " + D.mes_nombre;
+  $("titulo").textContent = D.mes_nombre;
+  const dias = D.dias;
+  const ultimo = dias[dias.length - 1];
+  const estado = $("estado");
+  if (D.final) { estado.classList.add("final"); estado.lastChild.textContent = "Resultado final"; }
+  else estado.lastChild.textContent = "Provisional · día " + dias.length + " de " + D.dias_mes;
+  $("hero-label").textContent = D.final ? "Media final del mes" : "Media del mes hasta hoy";
+  $("hero-valor").innerHTML = "";
+  $("hero-valor").append(eur(D.media) + " ", el("small", null, "€/MWh"));
+  $("progreso").style.width = (100 * dias.length / D.dias_mes) + "%";
+  $("hero-sub").textContent = "Con datos hasta el " + fecha(ultimo.fecha) + " (" + dias.length + " de " + D.dias_mes + " días)";
+  $("actualizado").textContent = "Última actualización: " + D.actualizado + ".";
+
+  const caro = dias.reduce((a, b) => (b.precio > a.precio ? b : a));
+  const barato = dias.reduce((a, b) => (b.precio < a.precio ? b : a));
+  const fichas = [
+    ["Último día (" + fecha(ultimo.fecha) + ")", ultimo.precio],
+    ["Día más caro (" + fecha(caro.fecha) + ")", caro.precio],
+    ["Día más barato (" + fecha(barato.fecha) + ")", barato.precio],
+    ["Apuestas este mes", null, String(D.ranking.length)],
+  ];
+  for (const [l, v, texto] of fichas) {
+    const f = el("div", "ficha");
+    f.append(el("div", "l", l));
+    const val = el("div", "v");
+    if (v == null) val.textContent = texto;
+    else val.append(eur(v) + " ", el("small", null, "€/MWh"));
+    f.append(val);
+    $("fichas").append(f);
+  }
+
+  // ---------- Clasificación
+  let seleccionado = null;
+  const filas = new Map();
+  const R = D.ranking;
+  const cont = $("ranking");
+
+  if (!R.length) {
+    const v = el("div", "vacio");
+    v.append(el("div", "icono", "🗳️"), el("p", null, "Nadie apostó para " + D.mes_nombre.toLowerCase() + "."));
+    cont.append(v);
+  } else {
+    const yo = el("div", "yo");
+    const lab = el("label", null, "Busca tu nombre");
+    lab.htmlFor = "yo";
+    const sel = el("select");
+    sel.id = "yo";
+    sel.append(new Option("— Elige tu nombre —", ""));
+    [...R].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")).forEach((r) => sel.append(new Option(r.nombre, r.nombre)));
+    const texto = el("div", "yo-texto");
+    texto.id = "yo-texto";
+    texto.setAttribute("aria-live", "polite");
+    yo.append(lab, sel, texto);
+    cont.append(yo);
+
+    const podio = el("div", "podio");
+    const medallas = ["🥇", "🥈", "🥉"];
+    R.slice(0, 3).forEach((r, i) => {
+      const p = el("div", "p" + (i === 0 ? " primero" : ""));
+      p.append(el("div", "medalla", medallas[r.puesto - 1] || "🏅"), el("div", "n", r.nombre),
+               el("div", "d num", eur(r.apuesta) + " €/MWh"), el("div", "d num", signo(r.diferencia)));
+      podio.append(p);
+    });
+    cont.append(podio);
+
+    const maxAbs = Math.max(...R.map((r) => Math.abs(r.diferencia)), 0.01);
+    const wrap = el("div", "tabla-scroll");
+    const t = el("table");
+    const thead = el("thead");
+    const hr = el("tr");
+    [["Puesto", ""], ["Nombre", ""], ["Apuesta", "r"], ["Diferencia (€/MWh)", "r"]].forEach(([h, c]) => hr.append(el("th", c, h)));
+    thead.append(hr);
+    const tb = el("tbody");
+    R.forEach((r) => {
+      const tr = el("tr");
+      tr.tabIndex = 0;
+      tr.append(el("td", "num", r.puesto + "º"), el("td", null, r.nombre), el("td", "r num", eur(r.apuesta)));
+      const td = el("td", "r");
+      const dif = el("div", "dif");
+      const barra = el("div", "barra ocultar-movil");
+      barra.setAttribute("aria-hidden", "true");
+      const s = el("span", r.diferencia < 0 ? "abajo" : "arriba");
+      s.style.width = (50 * Math.abs(r.diferencia) / maxAbs) + "%";
+      barra.append(s);
+      dif.append(el("span", "num", signo(r.diferencia)), barra);
+      td.append(dif);
+      tr.append(td);
+      const elegir = () => seleccionar(seleccionado === r.nombre ? null : r.nombre);
+      tr.addEventListener("click", elegir);
+      tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); elegir(); } });
+      filas.set(r.nombre, tr);
+      tb.append(tr);
+    });
+    t.append(thead, tb);
+    wrap.append(t);
+    cont.append(wrap);
+    const ley = el("div", "leyenda");
+    const a = el("span"); const ia = el("i"); ia.style.background = "var(--abajo)"; a.append(ia, "Por debajo de la media");
+    const b = el("span"); const ib = el("i"); ib.style.background = "var(--arriba)"; b.append(ib, "Por encima de la media");
+    ley.append(a, b);
+    cont.append(ley);
+    sel.addEventListener("change", () => seleccionar(sel.value || null));
+  }
+
+  function seleccionar(nombre) {
+    seleccionado = nombre && filas.has(nombre) ? nombre : null;
+    guardar("omieporra-nombre", seleccionado || "");
+    const sel = $("yo");
+    if (sel) sel.value = seleccionado || "";
+    filas.forEach((tr, n) => tr.classList.toggle("sel", n === seleccionado));
+    const texto = $("yo-texto");
+    const leyenda = $("leyenda-apuesta");
+    if (seleccionado) {
+      const r = R.find((x) => x.nombre === seleccionado);
+      texto.innerHTML = "";
+      const lado = r.diferencia < 0 ? "por debajo" : "por encima";
+      texto.append("Vas ", el("b", null, r.puesto + "º de " + R.length), ". Apostaste ",
+                   el("b", null, eur(r.apuesta) + " €/MWh"), ", " + eur(Math.abs(r.diferencia)) + " €/MWh " + lado + " de la media.");
+      leyenda.hidden = false;
+      leyenda.lastChild.textContent = "Apuesta de " + seleccionado;
+    } else {
+      if (texto) texto.textContent = "Elige tu nombre (o toca una fila) para ver tu apuesta en la gráfica.";
+      leyenda.hidden = true;
+    }
+    dibujar();
+  }
+
+  // ---------- Gráfica (SVG)
+  const NS = "http://www.w3.org/2000/svg";
+  const caja = $("grafica");
+  const tip = $("tooltip");
+  let svg = null, indice = null;
+
+  function s(tag, attrs, padre) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (padre) padre.append(e);
+    return e;
+  }
+  function pasos(min, max, n) {
+    const bruto = (max - min) / n;
+    const mag = Math.pow(10, Math.floor(Math.log10(bruto)));
+    const paso = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((p) => p >= bruto);
+    const lista = [];
+    // El último tick siempre queda por encima del valor máximo
+    for (let v = Math.floor(min / paso) * paso; ; v += paso) {
+      lista.push(+v.toFixed(6));
+      if (v >= max - 1e-9) break;
+    }
+    return lista;
+  }
+
+  function dibujar() {
+    if (svg) svg.remove();
+    const W = caja.clientWidth;
+    const H = W < 500 ? 250 : 320;
+    const m = { l: 44, r: W < 500 ? 12 : 64, t: 14, b: 28 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const apuesta = seleccionado ? R.find((x) => x.nombre === seleccionado).apuesta : null;
+    const valores = dias.map((d) => d.precio).concat(dias.map((d) => d.media));
+    if (apuesta != null) valores.push(apuesta);
+    const ticks = pasos(Math.min(0, ...valores), Math.max(...valores) * 1.05, 5);
+    const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+    const y = (v) => m.t + ih - (v - y0) / (y1 - y0) * ih;
+    const banda = iw / D.dias_mes;
+    const x = (i) => m.l + banda * (i + 0.5);
+
+    svg = s("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", tabindex: "0",
+                     "aria-label": "Gráfica del precio diario y la media acumulada de " + D.mes_nombre });
+    caja.prepend(svg);
+    const g = s("g", {}, svg);
+    ticks.forEach((v) => {
+      s("line", { x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, g);
+      const t = s("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end", fill: "var(--muted)", "font-size": 12, class: "num" }, g);
+      t.textContent = v.toLocaleString("es-ES");
+    });
+    const cada = W < 500 ? 7 : 5;
+    for (let i = 0; i < D.dias_mes; i++) {
+      if (i === 0 || (i + 1) % cada === 0) {
+        const t = s("text", { x: x(i), y: H - 8, "text-anchor": "middle", fill: "var(--muted)", "font-size": 12 }, g);
+        t.textContent = String(i + 1);
+      }
+    }
+    // Columnas: 4px redondeadas en el extremo, rectas en la base
+    const ancho = Math.max(2, Math.min(24, banda - 2));
+    const radio = Math.min(4, ancho / 2);
+    const base = y(Math.max(0, y0));
+    dias.forEach((d, i) => {
+      const top = y(d.precio), h = Math.abs(base - top);
+      if (h < 0.5) return;
+      const x0 = x(i) - ancho / 2, r = Math.min(radio, h);
+      const dPath = d.precio >= 0
+        ? `M${x0},${base}V${top + r}Q${x0},${top} ${x0 + r},${top}H${x0 + ancho - r}Q${x0 + ancho},${top} ${x0 + ancho},${top + r}V${base}Z`
+        : `M${x0},${base}V${top - r}Q${x0},${top} ${x0 + r},${top}H${x0 + ancho - r}Q${x0 + ancho},${top} ${x0 + ancho},${top - r}V${base}Z`;
+      s("path", { d: dPath, fill: "var(--bar)", "data-i": i, class: "col" }, g);
+    });
+    // Apuesta seleccionada
+    if (apuesta != null) {
+      s("line", { x1: m.l, x2: m.l + iw, y1: y(apuesta), y2: y(apuesta), stroke: "var(--apuesta)", "stroke-width": 2, "stroke-linecap": "round" }, g);
+      if (W >= 500) {
+        const t = s("text", { x: m.l + iw + 8, y: y(apuesta) + 4, fill: "var(--ink)", "font-size": 12, class: "num" }, g);
+        t.textContent = eur(apuesta);
+      }
+    }
+    // Media acumulada
+    const linea = dias.map((d, i) => (i ? "L" : "M") + x(i) + "," + y(d.media)).join("");
+    s("path", { d: linea, fill: "none", stroke: "var(--media)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, g);
+    const ux = x(dias.length - 1), uy = y(ultimo.media);
+    s("circle", { cx: ux, cy: uy, r: 4, fill: "var(--media)", stroke: "var(--surface)", "stroke-width": 2 }, g);
+    if (W >= 500 && dias.length < D.dias_mes - 3) {
+      const t = s("text", { x: ux + 8, y: uy - 8, fill: "var(--ink)", "font-size": 12, "font-weight": 600, class: "num" }, g);
+      t.textContent = eur(ultimo.media);
+    }
+    // Capa de interacción
+    const cruz = s("line", { y1: m.t, y2: m.t + ih, stroke: "var(--axis)", "stroke-width": 1, visibility: "hidden" }, g);
+    const punto = s("circle", { r: 4, fill: "var(--media)", stroke: "var(--surface)", "stroke-width": 2, visibility: "hidden" }, g);
+    const zona = s("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" }, svg);
+
+    function mostrar(i) {
+      if (i == null || i < 0 || i >= dias.length) { ocultar(); return; }
+      indice = i;
+      const d = dias[i];
+      cruz.setAttribute("x1", x(i)); cruz.setAttribute("x2", x(i)); cruz.setAttribute("visibility", "visible");
+      punto.setAttribute("cx", x(i)); punto.setAttribute("cy", y(d.media)); punto.setAttribute("visibility", "visible");
+      svg.querySelectorAll(".col").forEach((c) => c.setAttribute("fill", +c.dataset.i === i ? "var(--muted)" : "var(--bar)"));
+      tip.innerHTML = "";
+      tip.append(el("div", "t", fecha(d.fecha) + (d.periodos !== 96 ? " · " + d.periodos + " periodos" : "")));
+      const fila = (color, valor, nombre) => {
+        const f = el("div", "fila"); const k = el("i", "key"); k.style.background = color;
+        f.append(k, el("b", null, eur(valor) + " €/MWh"), el("span", null, nombre)); tip.append(f);
+      };
+      fila("var(--bar)", d.precio, "precio del día");
+      fila("var(--media)", d.media, "media acumulada");
+      if (apuesta != null) fila("var(--apuesta)", apuesta, seleccionado);
+      tip.style.display = "block";
+      const tw = tip.offsetWidth;
+      let left = x(i) + 12;
+      if (left + tw > W) left = x(i) - tw - 12;
+      tip.style.left = Math.max(0, left) + "px";
+      tip.style.top = m.t + "px";
+    }
+    function ocultar() {
+      indice = null;
+      cruz.setAttribute("visibility", "hidden"); punto.setAttribute("visibility", "hidden");
+      svg.querySelectorAll(".col").forEach((c) => c.setAttribute("fill", "var(--bar)"));
+      tip.style.display = "none";
+    }
+    const desdePuntero = (e) => {
+      const r = svg.getBoundingClientRect();
+      const px = (e.clientX - r.left) * (W / r.width);
+      return Math.min(dias.length - 1, Math.max(0, Math.floor((px - m.l) / banda)));
+    };
+    zona.addEventListener("pointermove", (e) => mostrar(desdePuntero(e)));
+    zona.addEventListener("pointerdown", (e) => mostrar(desdePuntero(e)));
+    zona.addEventListener("pointerleave", ocultar);
+    svg.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") { e.preventDefault(); mostrar(Math.min(dias.length - 1, (indice ?? -1) + 1)); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); mostrar(Math.max(0, (indice ?? dias.length) - 1)); }
+      else if (e.key === "Escape") ocultar();
+    });
+    svg.addEventListener("focus", () => mostrar(dias.length - 1));
+    svg.addEventListener("blur", ocultar);
+  }
+
+  // Tabla de datos (accesible sin pasar el ratón)
+  (function () {
+    const t = $("tabla-datos");
+    const h = el("tr");
+    ["Día", "Precio medio", "Media acumulada", "Mínimo", "Máximo"].forEach((c, i) => h.append(el("th", i ? "r" : "", c)));
+    const thead = el("thead"); thead.append(h);
+    const tb = el("tbody");
+    dias.forEach((d) => {
+      const tr = el("tr");
+      tr.append(el("td", null, fecha(d.fecha)));
+      [d.precio, d.media, d.min, d.max].forEach((v) => tr.append(el("td", "r num", eur(v))));
+      tb.append(tr);
+    });
+    t.append(thead, tb);
+  })();
+
+  // ---------- Próximo mes
+  $("h-proximo").textContent = "Apuestas para " + D.proximo_nombre;
+  const cierre = new Date(D.cierre_proximo);
+  const quedan = cierre - new Date();
+  if (quedan > 0) {
+    const d = Math.floor(quedan / 864e5), h = Math.floor((quedan % 864e5) / 36e5);
+    const mesProximo = MESES[Number(D.proximo.split("-")[1]) - 1];
+    $("cuenta-atras").textContent = "Se cierran el 1 de " + mesProximo + " a las 00:00 (hora de Madrid) · quedan " +
+      (d ? d + (d === 1 ? " día y " : " días y ") : "") + h + (h === 1 ? " hora" : " horas") + ".";
+    if (D.formulario) { const b = $("boton-apostar"); b.href = D.formulario; b.hidden = false; }
+  } else {
+    $("cuenta-atras").textContent = "Las apuestas ya están cerradas.";
+  }
+  const chips = $("apostantes");
+  if (D.apostantes_proximo.length) {
+    chips.before(el("p", "sub", "Ya han apostado (" + D.apostantes_proximo.length + "). Las cifras se verán cuando empiece el mes:"));
+    D.apostantes_proximo.forEach((n) => chips.append(el("span", "chip", n)));
+  } else {
+    chips.append(el("p", "sub", "Todavía no ha apostado nadie. ¡Sé el primero!"));
+  }
+
+  // ---------- Historial
+  D.historial.forEach((h) => {
+    const c = el("div", "mes");
+    c.append(el("div", "t", h.mes_nombre + (h.final ? "" : " · en curso")));
+    const m = el("div", "m num"); m.append(eur(h.media) + " ", el("small", null, "€/MWh")); c.append(m);
+    c.append(el("div", "g", h.ganador ? (h.final ? "🏆 " : "Va ganando: ") + h.ganador + " (" + eur(h.apuesta_ganador) + ")" : "Sin apuestas"));
+    const l = el("div", "links");
+    const a1 = el("a", null, "Gráfica"); a1.href = h.png;
+    const a2 = el("a", null, "Excel"); a2.href = h.xlsx;
+    l.append(a1, a2); c.append(l);
+    $("historial").append(c);
+  });
+
+  seleccionar(leer("omieporra-nombre"));
+  let ancho = caja.clientWidth;
+  window.addEventListener("resize", () => { if (caja.clientWidth !== ancho) { ancho = caja.clientWidth; dibujar(); } });
+})();
+</script>
+</body>
+</html>
