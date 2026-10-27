@@ -45,6 +45,9 @@ FICHERO_APUESTAS = Path("apuestas.csv")
 URL_FORMULARIO = os.environ.get("APUESTAS_URL", "").strip()
 ZONA = ZoneInfo("Europe/Madrid")
 INTENTOS = 4
+# OMIE publica hacia las 13:00 el precio del día siguiente. A partir de esta hora
+# (de Madrid) que falte el día de mañana se considera un error.
+HORA_PUBLICACION = 14
 
 
 class ErrorOmie(Exception):
@@ -130,8 +133,9 @@ def descargar_dia(dia, sesion):
     raise ErrorOmie(f"OMIE no responde al pedir {nombre}: {ultimo_error}\nURL: {url}")
 
 
-def datos_del_mes(anio, mes, hoy):
+def datos_del_mes(anio, mes, ahora):
     """Tabla diaria (fecha, periodos, precio medio) del mes, hasta donde haya datos."""
+    hoy = ahora.date()
     ultimo_dia_mes = date(anio, mes, calendar.monthrange(anio, mes)[1])
     # OMIE publica sobre las 13:00 el precio del día siguiente.
     hasta = min(ultimo_dia_mes, hoy + timedelta(days=1))
@@ -145,14 +149,14 @@ def datos_del_mes(anio, mes, hoy):
     while dia <= hasta:
         texto = descargar_dia(dia, sesion)
         if texto is None:
-            # Solo es normal que falte el día de mañana.
-            if dia <= hoy:
+            # Solo es normal que falte el día de mañana, y solo antes de las 14:00.
+            if dia <= hoy or ahora.hour >= HORA_PUBLICACION:
                 raise ErrorOmie(
                     f"No hay datos de OMIE para el {dia:%d/%m/%Y}, y ya deberían estar "
                     "publicados. Revisa si la web de OMIE funciona o si ha cambiado la URL:\n"
                     + URL_OMIE.format(fecha=f"{dia:%Y%m%d}")
                 )
-            print(f"  {dia}: aún no publicado (normal si es mañana)")
+            print(f"  {dia}: aún no publicado (normal antes de las {HORA_PUBLICACION}:00)")
         else:
             precios = leer_fichero_omie(texto, dia)
             filas.append(
@@ -447,7 +451,7 @@ def main():
     if apuestas.empty:
         print("Uso las apuestas de apuestas.csv")
         apuestas = leer_apuestas()
-    tabla = datos_del_mes(anio, mes, ahora.date())
+    tabla = datos_del_mes(anio, mes, ahora)
     if tabla.empty:
         raise ErrorOmie(f"Todavía no hay ningún dato de OMIE para {etiqueta}.")
     media = tabla["Media acumulada (€/MWh)"].iloc[-1]
