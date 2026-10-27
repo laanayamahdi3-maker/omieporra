@@ -9,8 +9,6 @@ on:
         description: "Mes a calcular (AAAA-MM). Vacío = mes actual"
         required: false
         default: ""
-  push: # TEMPORAL: solo para probar desde la rama de Claude
-    branches: [claude/omieporra-github-actions-s0p3lz]
 
 permissions:
   contents: write
@@ -23,9 +21,9 @@ jobs:
   actualizar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
