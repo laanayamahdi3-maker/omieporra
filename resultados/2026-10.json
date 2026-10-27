@@ -1,0 +1,235 @@
+{
+ "mes": "2026-10",
+ "mes_nombre": "Octubre 2026",
+ "dias_mes": 31,
+ "final": false,
+ "actualizado": "27/10/2026 14:15",
+ "media": 160.06,
+ "dias": [
+  {
+   "fecha": "2026-10-01",
+   "periodos": 96,
+   "precio": 152.01,
+   "media": 152.01,
+   "min": 38.95,
+   "max": 258.32
+  },
+  {
+   "fecha": "2026-10-02",
+   "periodos": 96,
+   "precio": 177.72,
+   "media": 164.86,
+   "min": 112.5,
+   "max": 279.83
+  },
+  {
+   "fecha": "2026-10-03",
+   "periodos": 96,
+   "precio": 166.6,
+   "media": 165.44,
+   "min": 63.94,
+   "max": 238.7
+  },
+  {
+   "fecha": "2026-10-04",
+   "periodos": 96,
+   "precio": 171.85,
+   "media": 167.04,
+   "min": 70.69,
+   "max": 245.07
+  },
+  {
+   "fecha": "2026-10-05",
+   "periodos": 96,
+   "precio": 196.88,
+   "media": 173.01,
+   "min": 130.0,
+   "max": 271.93
+  },
+  {
+   "fecha": "2026-10-06",
+   "periodos": 96,
+   "precio": 201.99,
+   "media": 177.84,
+   "min": 147.09,
+   "max": 281.31
+  },
+  {
+   "fecha": "2026-10-07",
+   "periodos": 96,
+   "precio": 182.33,
+   "media": 178.48,
+   "min": 80.8,
+   "max": 245.9
+  },
+  {
+   "fecha": "2026-10-08",
+   "periodos": 96,
+   "precio": 106.9,
+   "media": 169.54,
+   "min": 0.0,
+   "max": 204.5
+  },
+  {
+   "fecha": "2026-10-09",
+   "periodos": 96,
+   "precio": 107.37,
+   "media": 162.63,
+   "min": 0.0,
+   "max": 205.0
+  },
+  {
+   "fecha": "2026-10-10",
+   "periodos": 96,
+   "precio": 130.0,
+   "media": 159.36,
+   "min": -0.01,
+   "max": 219.66
+  },
+  {
+   "fecha": "2026-10-11",
+   "periodos": 96,
+   "precio": 141.49,
+   "media": 157.74,
+   "min": 0.51,
+   "max": 241.59
+  },
+  {
+   "fecha": "2026-10-12",
+   "periodos": 96,
+   "precio": 151.76,
+   "media": 157.24,
+   "min": 0.0,
+   "max": 273.01
+  },
+  {
+   "fecha": "2026-10-13",
+   "periodos": 96,
+   "precio": 166.63,
+   "media": 157.96,
+   "min": 25.0,
+   "max": 269.29
+  },
+  {
+   "fecha": "2026-10-14",
+   "periodos": 96,
+   "precio": 186.44,
+   "media": 160.0,
+   "min": 57.66,
+   "max": 299.0
+  },
+  {
+   "fecha": "2026-10-15",
+   "periodos": 96,
+   "precio": 193.11,
+   "media": 162.21,
+   "min": 60.0,
+   "max": 297.5
+  },
+  {
+   "fecha": "2026-10-16",
+   "periodos": 96,
+   "precio": 191.64,
+   "media": 164.04,
+   "min": 79.26,
+   "max": 285.95
+  },
+  {
+   "fecha": "2026-10-17",
+   "periodos": 96,
+   "precio": 107.15,
+   "media": 160.7,
+   "min": 0.99,
+   "max": 212.04
+  },
+  {
+   "fecha": "2026-10-18",
+   "periodos": 96,
+   "precio": 76.28,
+   "media": 156.01,
+   "min": 0.0,
+   "max": 185.8
+  },
+  {
+   "fecha": "2026-10-19",
+   "periodos": 96,
+   "precio": 215.11,
+   "media": 159.12,
+   "min": 168.5,
+   "max": 299.0
+  },
+  {
+   "fecha": "2026-10-20",
+   "periodos": 96,
+   "precio": 195.52,
+   "media": 160.94,
+   "min": 58.1,
+   "max": 278.87
+  },
+  {
+   "fecha": "2026-10-21",
+   "periodos": 96,
+   "precio": 146.97,
+   "media": 160.27,
+   "min": 0.3,
+   "max": 299.0
+  },
+  {
+   "fecha": "2026-10-22",
+   "periodos": 96,
+   "precio": 155.63,
+   "media": 160.06,
+   "min": 0.28,
+   "max": 286.76
+  },
+  {
+   "fecha": "2026-10-23",
+   "periodos": 96,
+   "precio": 110.09,
+   "media": 157.89,
+   "min": 0.66,
+   "max": 224.0
+  },
+  {
+   "fecha": "2026-10-24",
+   "periodos": 96,
+   "precio": 137.19,
+   "media": 157.03,
+   "min": -0.01,
+   "max": 226.0
+  },
+  {
+   "fecha": "2026-10-25",
+   "periodos": 100,
+   "precio": 111.88,
+   "media": 155.22,
+   "min": -1.46,
+   "max": 250.59
+  },
+  {
+   "fecha": "2026-10-26",
+   "periodos": 96,
+   "precio": 196.86,
+   "media": 156.82,
+   "min": 55.0,
+   "max": 300.0
+  },
+  {
+   "fecha": "2026-10-27",
+   "periodos": 96,
+   "precio": 206.89,
+   "media": 158.68,
+   "min": 100.0,
+   "max": 290.0
+  },
+  {
+   "fecha": "2026-10-28",
+   "periodos": 96,
+   "precio": 197.46,
+   "media": 160.06,
+   "min": 57.08,
+   "max": 319.0
+  }
+ ],
+ "ranking": []
+}
