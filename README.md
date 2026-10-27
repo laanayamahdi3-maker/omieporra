@@ -50,7 +50,7 @@ Si dejas el campo vacío calcula el mes actual; si escribes `2026-10` calcula es
 
 La ejecución falla a propósito (y GitHub te avisa por correo) cuando:
 - OMIE no responde o bloquea la descarga,
-- falta el precio de un día que ya debería estar publicado (no hay datos nuevos; a partir de las 14:00 también el de mañana),
+- falta el precio de un día que ya debería estar publicado (no hay datos nuevos),
 - `apuestas.csv` tiene un formato incorrecto (p. ej. una apuesta que no es un número).
 
 Pulsa sobre la ejecución en rojo → paso con la ❌ → al final del texto verás un mensaje `ERROR: ...` explicando el motivo.

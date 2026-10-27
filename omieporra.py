@@ -45,9 +45,6 @@ FICHERO_APUESTAS = Path("apuestas.csv")
 URL_FORMULARIO = os.environ.get("APUESTAS_URL", "").strip()
 ZONA = ZoneInfo("Europe/Madrid")
 INTENTOS = 4
-# OMIE publica hacia las 13:00 el precio del día siguiente. A partir de esta hora
-# (de Madrid) que falte el día de mañana se considera un error.
-HORA_PUBLICACION = 14
 
 
 class ErrorOmie(Exception):
@@ -152,14 +149,14 @@ def datos_del_mes(anio, mes, ahora):
     while dia <= hasta:
         texto = descargar_dia(dia, sesion)
         if texto is None:
-            # Solo es normal que falte el día de mañana, y solo antes de las 14:00.
-            if dia <= hoy or ahora.hour >= HORA_PUBLICACION:
+            # Solo es normal que falte el día de mañana (OMIE lo publica por la tarde).
+            if dia <= hoy:
                 raise ErrorOmie(
                     f"No hay datos de OMIE para el {dia:%d/%m/%Y}, y ya deberían estar "
                     "publicados. Revisa si la web de OMIE funciona o si ha cambiado la URL:\n"
                     + URL_OMIE.format(fecha=f"{dia:%Y%m%d}")
                 )
-            print(f"  {dia}: aún no publicado (normal antes de las {HORA_PUBLICACION}:00)")
+            print(f"  AVISO: el precio del {dia:%d/%m/%Y} aún no está publicado (normal si es mañana)")
         else:
             precios = leer_fichero_omie(texto, dia)
             filas.append(
