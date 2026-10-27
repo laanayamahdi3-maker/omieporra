@@ -1,0 +1,76 @@
+name: OMIEporra
+
+on:
+  schedule:
+    - cron: "0 14 * * *" # todos los días a las 14:00 UTC (15:00/16:00 en España)
+  workflow_dispatch: # botón "Run workflow" en la pestaña Actions
+    inputs:
+      mes:
+        description: "Mes a calcular (AAAA-MM). Vacío = mes actual"
+        required: false
+        default: ""
+
+permissions:
+  contents: write # guardar resultados en el repo
+  pages: write # publicar la web
+  id-token: write # necesario para publicar en GitHub Pages
+
+concurrency:
+  group: omieporra
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Comprobar que OMIE responde
+        run: |
+          URL="https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc&filename=marginalpdbc_$(TZ=Europe/Madrid date +%Y%m%d).1"
+          echo "Probando $URL"
+          if ! curl -fsS --retry 3 --retry-delay 5 --max-time 60 -o /tmp/prueba.txt "$URL"; then
+            echo "::error::OMIE no responde o bloquea la descarga desde GitHub Actions."
+            exit 1
+          fi
+          head -n 3 /tmp/prueba.txt; echo "..."; tail -n 2 /tmp/prueba.txt
+
+      - name: Calcular OMIEporra
+        env:
+          MES: ${{ inputs.mes }}
+        run: python omieporra.py "$MES"
+
+      - name: Guardar resultados en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datos omieporra_*.xlsx omieporra_*.png
+          if git diff --cached --quiet; then
+            echo "No hay cambios que guardar."
+          else
+            git commit -m "OMIEporra: datos del $(TZ=Europe/Madrid date +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Preparar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir la web
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web
+
+      - name: Publicar la web
+        id: publicar
+        uses: actions/deploy-pages@v4
