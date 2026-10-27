@@ -11,7 +11,9 @@ on:
         default: ""
 
 permissions:
-  contents: write
+  contents: write # guardar resultados en el repo
+  pages: write # publicar la web
+  id-token: write # necesario para publicar en GitHub Pages
 
 concurrency:
   group: omieporra
@@ -20,6 +22,9 @@ concurrency:
 jobs:
   actualizar:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
 
@@ -57,3 +62,15 @@ jobs:
             git commit -m "OMIEporra: datos del $(TZ=Europe/Madrid date +%Y-%m-%d)"
             git push
           fi
+
+      - name: Preparar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir la web
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: web
+
+      - name: Publicar la web
+        id: publicar
+        uses: actions/deploy-pages@v4

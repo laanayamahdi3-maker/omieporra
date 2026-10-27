@@ -54,3 +54,13 @@ Pulsa sobre la ejecución en rojo → paso con la ❌ → al final del texto ver
 ## Configuración inicial (una sola vez)
 
 *Settings → Actions → General → Workflow permissions →* **Read and write permissions** → *Save*.
+
+## Página web para la clase 🌐
+
+Cada ejecución publica el ranking y la gráfica en GitHub Pages:
+**https://laanayamahdi3-maker.github.io/omieporra/**
+
+Para que funcione (una sola vez):
+1. *Settings → General →* abajo del todo, *Danger Zone → Change visibility →* **Public** (GitHub Pages gratis solo funciona en repositorios públicos).
+2. *Settings → Pages → Build and deployment → Source:* **GitHub Actions**.
+3. *Actions → OMIEporra → Run workflow* para publicarla la primera vez.

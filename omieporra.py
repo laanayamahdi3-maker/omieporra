@@ -8,6 +8,7 @@ Uso:
 Genera:
     omieporra_AAAA-MM.xlsx  (hojas "Ranking" y "Datos OMIE")
     omieporra_AAAA-MM.png   (gráfica)
+    web/index.html          (página para GitHub Pages)
 
 Si OMIE no responde, si un fichero tiene un formato raro o si faltan datos que
 ya deberían estar publicados, el script termina con error (código 1) y explica
@@ -15,6 +16,7 @@ el motivo, para que GitHub Actions marque la ejecución en rojo.
 """
 
 import calendar
+import html
 import sys
 import time
 from datetime import date, datetime, timedelta
@@ -260,6 +262,63 @@ def excel(tabla_ranking, tabla_datos, imagen, fichero):
     libro.save(fichero)
 
 
+def pagina_web(tabla_ranking, tabla_datos, etiqueta, carpeta=Path("web")):
+    """Crea web/index.html (para GitHub Pages) con el ranking y la gráfica del mes,
+    y copia ahí las gráficas y Excels de todos los meses."""
+    carpeta.mkdir(exist_ok=True)
+    meses = sorted({p.stem.split("_")[1] for p in Path(".").glob("omieporra_*.png")}, reverse=True)
+    for mes in meses:
+        for ext in ("png", "xlsx"):
+            origen = Path(f"omieporra_{mes}.{ext}")
+            if origen.exists():
+                (carpeta / origen.name).write_bytes(origen.read_bytes())
+
+    def num(x):
+        return f"{x:.2f}".replace(".", ",")
+
+    filas = "\n".join(
+        f"<tr><td>{f['Puesto']}</td><td>{html.escape(str(f['Nombre']))}</td>"
+        f"<td>{num(f['Apuesta (€/MWh)'])}</td><td>{num(f['Diferencia (€/MWh)'])}</td></tr>"
+        for _, f in tabla_ranking.iterrows()
+    )
+    otros = "\n".join(
+        f'<li>{m}: <a href="omieporra_{m}.png">gráfica</a> · <a href="omieporra_{m}.xlsx">Excel</a></li>'
+        for m in meses
+    )
+    media = tabla_datos["Media acumulada (€/MWh)"].iloc[-1]
+    ultimo = tabla_datos["Fecha"].iloc[-1]
+    actualizado = datetime.now(ZONA).strftime("%d/%m/%Y %H:%M")
+    (carpeta / "index.html").write_text(f"""<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMIEporra {etiqueta}</title>
+<style>
+body {{ font-family: system-ui, sans-serif; max-width: 960px; margin: 0 auto; padding: 16px; color: #1f2933; background: #fff; }}
+h1 {{ margin-bottom: 0; }} .sub {{ color: #616e7c; margin-top: 4px; }}
+.media {{ font-size: 1.4em; margin: 16px 0; }} .media b {{ color: #d1495b; }}
+table {{ border-collapse: collapse; width: 100%; margin: 16px 0; }}
+th, td {{ padding: 6px 10px; border-bottom: 1px solid #e4e7eb; text-align: right; }}
+th:nth-child(2), td:nth-child(2) {{ text-align: left; }}
+tbody tr:first-child {{ background: #fff4d6; font-weight: bold; }}
+img {{ max-width: 100%; height: auto; }}
+</style></head><body>
+<h1>⚡ OMIEporra {etiqueta}</h1>
+<p class="sub">Datos hasta el {ultimo:%d/%m/%Y} · actualizado el {actualizado} (hora de Madrid)</p>
+<p class="media">Media acumulada del mes: <b>{num(media)} €/MWh</b></p>
+<table><thead><tr><th>Puesto</th><th>Nombre</th><th>Apuesta (€/MWh)</th><th>Diferencia (€/MWh)</th></tr></thead>
+<tbody>
+{filas}
+</tbody></table>
+<img src="omieporra_{etiqueta}.png" alt="Gráfica OMIEporra {etiqueta}">
+<h2>Todos los meses</h2>
+<ul>
+{otros}
+</ul>
+<p class="sub">Fuente: OMIE, mercado diario, precio marginal de España.</p>
+</body></html>
+""", encoding="utf-8")
+
+
 # ---------------------------------------------------------------- principal
 
 
@@ -287,6 +346,7 @@ def main():
     xlsx = Path(f"omieporra_{etiqueta}.xlsx")
     grafica(tabla, apuestas, etiqueta, png)
     excel(tabla_ranking, tabla, png, xlsx)
+    pagina_web(tabla_ranking, tabla, etiqueta)
 
     print(f"\nDías con datos: {len(tabla)} (último: {tabla['Fecha'].iloc[-1]})")
     print(f"Media acumulada: {media:.2f} €/MWh\n")
