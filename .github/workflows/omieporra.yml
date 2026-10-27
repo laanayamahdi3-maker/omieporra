@@ -42,7 +42,7 @@ jobs:
           # Enlace CSV de la hoja de respuestas del Google Form.
           # Vacío = se usan las apuestas de apuestas.csv
           # Enlace para rellenar el formulario (botón "Apostar ahora" de la web)
-          FORMULARIO_URL: ""
+          FORMULARIO_URL: "https://docs.google.com/forms/d/e/1FAIpQLScme-T6RPIHZhOcXfl6ODzt8zOdJmWsoMRafjnBCUF551AeSQ/viewform"
           APUESTAS_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSuL94ClHtQa6mIYAB82Py-cRXNhibTOVX5oyCorTFjdiL-E3R2aOtykFtmvy7isbFld9Hz7595BbiT/pub?gid=1666321972&single=true&output=csv"
         run: python omieporra.py "$MES"
 
