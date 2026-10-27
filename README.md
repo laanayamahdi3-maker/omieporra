@@ -14,22 +14,26 @@ Este repositorio descarga solo los datos de OMIE todos los días, calcula la med
 | `datos/` | Ficheros originales de OMIE descargados (uno por día). |
 | `omieporra_AAAA-MM.xlsx` / `.png` | Los resultados de cada mes. |
 
-## Cada mes: actualizar `apuestas.csv`
+## Cómo apuesta cada compañero (Google Forms)
 
-Hazlo **antes del día 1** del mes de la apuesta.
+Cada uno rellena el formulario de Google con su **nombre**, el **mes** por el que apuesta y su **predicción (€/MWh)**.
+El programa lee las respuestas solo, cada día. Reglas:
+- Una apuesta para un mes **solo cuenta si se envía antes del día 1** de ese mes.
+- Si alguien apuesta varias veces para el mismo mes, **cuenta la última**.
+- En la web se ve quién ha apostado ya para el mes siguiente, pero sin las cifras, hasta que empieza el mes.
 
-1. Exporta las respuestas de Microsoft Forms a Excel y guárdalas como **CSV (delimitado por punto y coma)**.
-2. Deja solo dos columnas, con esta primera fila exacta:
+### Crear el formulario (una sola vez)
+1. En [Google Forms](https://forms.google.com) crea un formulario con 3 preguntas obligatorias:
+   - **Nombre** (respuesta corta)
+   - **Mes** (desplegable con opciones como `Noviembre 2026`, `Diciembre 2026`...)
+   - **Predicción (€/MWh)** (respuesta corta; en *⋮ → Validación de respuestas* elige *Número*)
+2. Pestaña **Respuestas → Vincular con Hojas de cálculo** → *Crear una hoja de cálculo nueva*.
+3. En la hoja: **Archivo → Compartir → Publicar en la Web** → elige la hoja de respuestas y el formato **Valores separados por comas (.csv)** → **Publicar** → copia el enlace.
+4. Pon ese enlace en `.github/workflows/omieporra.yml`, en la línea `APUESTAS_URL: ""` (entre las comillas).
 
-   ```
-   nombre;prediccion
-   Ana;75,5
-   Luis;82
-   ```
-   (Puedes usar coma decimal, como en Excel en español.)
-3. En GitHub, abre `apuestas.csv` → icono del lápiz ✏️ (o *Add file → Upload files* y sube tu archivo con el mismo nombre) → **Commit changes**.
+Cada mes solo tienes que añadir al desplegable "Mes" el mes siguiente.
 
-> Los resultados del mes anterior no se pierden: su `omieporra_AAAA-MM.xlsx` y `.png` se quedan guardados en el repositorio.
+> `apuestas.csv` sigue funcionando como reserva: se usa si no hay enlace del formulario o si el formulario no tiene apuestas para ese mes.
 
 ## Ver los resultados
 

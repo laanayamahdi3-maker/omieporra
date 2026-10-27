@@ -17,6 +17,9 @@ el motivo, para que GitHub Actions marque la ejecución en rojo.
 
 import calendar
 import html
+import io
+import os
+import re
 import sys
 import time
 from datetime import date, datetime, timedelta
@@ -38,6 +41,8 @@ URL_OMIE = (
 )
 CARPETA_DATOS = Path("datos")
 FICHERO_APUESTAS = Path("apuestas.csv")
+# Enlace CSV de la hoja de respuestas del Google Form (se configura en el workflow).
+URL_FORMULARIO = os.environ.get("APUESTAS_URL", "").strip()
 ZONA = ZoneInfo("Europe/Madrid")
 INTENTOS = 4
 
@@ -171,6 +176,97 @@ def datos_del_mes(anio, mes, hoy):
 # ---------------------------------------------------------------- apuestas
 
 
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+         "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def a_numero(serie):
+    """'75,5 €' -> 75.5 (acepta coma o punto decimal)."""
+    limpio = (serie.astype(str).str.replace("€", "", regex=False)
+              .str.replace(" ", "", regex=False).str.replace(",", ".", regex=False))
+    return pd.to_numeric(limpio, errors="coerce")
+
+
+def a_mes(texto):
+    """'2026-11', '11/2026' o 'Noviembre 2026' -> '2026-11' (None si no se entiende)."""
+    t = str(texto).strip().lower()
+    m = re.fullmatch(r"(\d{4})\s*[-/]\s*(\d{1,2})", t)
+    if m:
+        anio, mes = int(m[1]), int(m[2])
+    elif m := re.fullmatch(r"(\d{1,2})\s*[-/]\s*(\d{4})", t):
+        anio, mes = int(m[2]), int(m[1])
+    elif m := re.fullmatch(r"([a-záéíóú]+)\s*(?:de\s*)?(\d{4})", t):
+        if m[1] not in MESES:
+            return None
+        anio, mes = int(m[2]), MESES.index(m[1]) + 1
+    else:
+        return None
+    return f"{anio}-{mes:02d}" if 1 <= mes <= 12 else None
+
+
+def leer_formulario(url):
+    """Lee las respuestas del Google Form (hoja publicada como CSV).
+
+    Devuelve una tabla con: fecha_envio, nombre, mes (AAAA-MM), prediccion.
+    """
+    try:
+        r = requests.get(url, timeout=30)
+        r.raise_for_status()
+    except requests.RequestException as e:
+        raise ErrorOmie(f"No puedo descargar las respuestas del formulario de Google: {e}")
+    if "<html" in r.text[:500].lower():
+        raise ErrorOmie(
+            "El enlace del formulario devuelve una página web, no un CSV. En la hoja de "
+            "Google usa Archivo > Compartir > Publicar en la Web > formato CSV."
+        )
+    df = pd.read_csv(io.StringIO(r.content.decode("utf-8-sig")), dtype=str)
+    if df.empty:
+        return pd.DataFrame(columns=["fecha_envio", "nombre", "mes", "prediccion"])
+
+    def columna(*claves):
+        for k in claves:  # en orden de preferencia
+            for c in df.columns:
+                if k in c.lower():
+                    return c
+        raise ErrorOmie(
+            f"No encuentro en el formulario una pregunta que contenga {claves}. "
+            f"Preguntas encontradas: {list(df.columns)}"
+        )
+
+    tabla = pd.DataFrame({
+        "envio": df[df.columns[0]],  # Google pone siempre la marca temporal primero
+        "nombre": df[columna("nombre")].fillna("").str.strip(),
+        "mes_texto": df[columna("mes")],
+        "prediccion": a_numero(df[columna("predic", "€", "precio")]),
+    })
+    # Fecha de envío: "27/10/2026 13:05:12" (España) o "10/27/2026 13:05:12" (EE. UU.)
+    partes = tabla["envio"].str.extract(r"^(\d+)/(\d+)/")
+    mes_primero = (pd.to_numeric(partes[1], errors="coerce") > 12).any()
+    tabla["fecha_envio"] = pd.to_datetime(tabla["envio"], dayfirst=not mes_primero, errors="coerce")
+    tabla["mes"] = tabla["mes_texto"].map(a_mes)
+
+    malas = tabla[tabla["fecha_envio"].isna() | tabla["mes"].isna()
+                  | tabla["prediccion"].isna() | (tabla["nombre"] == "")]
+    for _, f in malas.iterrows():
+        print(f"  AVISO: respuesta ignorada (datos incompletos o no válidos): "
+              f"{f['nombre']!r}, mes {f['mes_texto']!r}, envío {f['envio']!r}")
+    return tabla.drop(malas.index)[["fecha_envio", "nombre", "mes", "prediccion"]]
+
+
+def apuestas_del_mes(formulario, etiqueta):
+    """Apuestas válidas para el mes: enviadas antes del día 1 y, si alguien
+    apuesta varias veces, solo cuenta la última."""
+    anio, mes = map(int, etiqueta.split("-"))
+    limite = pd.Timestamp(anio, mes, 1)
+    validas = formulario[(formulario["mes"] == etiqueta) & (formulario["fecha_envio"] < limite)]
+    tarde = formulario[(formulario["mes"] == etiqueta) & (formulario["fecha_envio"] >= limite)]
+    for _, f in tarde.iterrows():
+        print(f"  AVISO: apuesta de {f['nombre']} enviada tarde ({f['fecha_envio']:%d/%m/%Y}), no cuenta")
+    validas = validas.assign(clave=validas["nombre"].str.lower().str.split().str.join(" "))
+    validas = validas.sort_values("fecha_envio").drop_duplicates("clave", keep="last")
+    return validas[["nombre", "prediccion"]].reset_index(drop=True)
+
+
 def leer_apuestas():
     if not FICHERO_APUESTAS.exists():
         raise ErrorOmie("No encuentro apuestas.csv en la carpeta del repositorio.")
@@ -188,12 +284,7 @@ def leer_apuestas():
         )
     df = df[["nombre", "prediccion"]].dropna(how="all")
     df["nombre"] = df["nombre"].str.strip()
-    limpio = (
-        df["prediccion"].str.replace("€", "", regex=False)
-        .str.replace(" ", "", regex=False)
-        .str.replace(",", ".", regex=False)
-    )
-    df["prediccion"] = pd.to_numeric(limpio, errors="coerce")
+    df["prediccion"] = a_numero(df["prediccion"])
     malas = df[df["prediccion"].isna()]
     if not malas.empty:
         raise ErrorOmie(
@@ -262,7 +353,8 @@ def excel(tabla_ranking, tabla_datos, imagen, fichero):
     libro.save(fichero)
 
 
-def pagina_web(tabla_ranking, tabla_datos, etiqueta, carpeta=Path("web")):
+def pagina_web(tabla_ranking, tabla_datos, etiqueta, proximo, apostantes_proximo,
+               carpeta=Path("web")):
     """Crea web/index.html (para GitHub Pages) con el ranking y la gráfica del mes,
     y copia ahí las gráficas y Excels de todos los meses."""
     carpeta.mkdir(exist_ok=True)
@@ -281,6 +373,12 @@ def pagina_web(tabla_ranking, tabla_datos, etiqueta, carpeta=Path("web")):
         f"<td>{num(f['Apuesta (€/MWh)'])}</td><td>{num(f['Diferencia (€/MWh)'])}</td></tr>"
         for _, f in tabla_ranking.iterrows()
     )
+    if apostantes_proximo:
+        nombres = ", ".join(html.escape(n) for n in apostantes_proximo)
+        proximas = (f"<p>Ya han apostado ({len(apostantes_proximo)}): {nombres}.<br>"
+                    "Las cifras se verán cuando empiece el mes.</p>")
+    else:
+        proximas = "<p>Todavía no ha apostado nadie.</p>"
     otros = "\n".join(
         f'<li>{m}: <a href="omieporra_{m}.png">gráfica</a> · <a href="omieporra_{m}.xlsx">Excel</a></li>'
         for m in meses
@@ -310,6 +408,8 @@ img {{ max-width: 100%; height: auto; }}
 {filas}
 </tbody></table>
 <img src="omieporra_{etiqueta}.png" alt="Gráfica OMIEporra {etiqueta}">
+<h2>Apuestas para {proximo}</h2>
+{proximas}
 <h2>Todos los meses</h2>
 <ul>
 {otros}
@@ -335,7 +435,18 @@ def main():
     etiqueta = f"{anio}-{mes:02d}"
     print(f"OMIEporra {etiqueta} (hoy {ahora:%Y-%m-%d %H:%M} hora de Madrid)")
 
-    apuestas = leer_apuestas()
+    proximo = f"{anio + mes // 12}-{mes % 12 + 1:02d}"
+    apostantes_proximo = []
+    apuestas = pd.DataFrame()
+    if URL_FORMULARIO:
+        formulario = leer_formulario(URL_FORMULARIO)
+        apuestas = apuestas_del_mes(formulario, etiqueta)
+        apostantes_proximo = sorted(apuestas_del_mes(formulario, proximo)["nombre"], key=str.lower)
+        print(f"Formulario: {len(apuestas)} apuestas para {etiqueta}, "
+              f"{len(apostantes_proximo)} para {proximo}")
+    if apuestas.empty:
+        print("Uso las apuestas de apuestas.csv")
+        apuestas = leer_apuestas()
     tabla = datos_del_mes(anio, mes, ahora.date())
     if tabla.empty:
         raise ErrorOmie(f"Todavía no hay ningún dato de OMIE para {etiqueta}.")
@@ -346,7 +457,7 @@ def main():
     xlsx = Path(f"omieporra_{etiqueta}.xlsx")
     grafica(tabla, apuestas, etiqueta, png)
     excel(tabla_ranking, tabla, png, xlsx)
-    pagina_web(tabla_ranking, tabla, etiqueta)
+    pagina_web(tabla_ranking, tabla, etiqueta, proximo, apostantes_proximo)
 
     print(f"\nDías con datos: {len(tabla)} (último: {tabla['Fecha'].iloc[-1]})")
     print(f"Media acumulada: {media:.2f} €/MWh\n")
