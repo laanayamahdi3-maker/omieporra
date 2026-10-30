@@ -2,9 +2,9 @@
  "mes": "2026-10",
  "mes_nombre": "Octubre 2026",
  "dias_mes": 31,
- "final": false,
- "actualizado": "29/10/2026 15:44",
- "media": 165.25,
+ "final": true,
+ "actualizado": "30/10/2026 15:45",
+ "media": 166.66,
  "dias": [
   {
    "fecha": "2026-10-01",
@@ -245,6 +245,14 @@
    "media": 165.25,
    "min": 171.39,
    "max": 324.72
+  },
+  {
+   "fecha": "2026-10-31",
+   "periodos": 96,
+   "precio": 208.98,
+   "media": 166.66,
+   "min": 57.62,
+   "max": 303.15
   }
  ],
  "ranking": []
