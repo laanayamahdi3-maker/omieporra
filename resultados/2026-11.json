@@ -1,0 +1,52 @@
+{
+ "mes": "2026-11",
+ "mes_nombre": "Noviembre 2026",
+ "dias_mes": 30,
+ "final": false,
+ "actualizado": "01/11/2026 15:28",
+ "media": 170.12,
+ "dias": [
+  {
+   "fecha": "2026-11-01",
+   "periodos": 96,
+   "precio": 163.19,
+   "media": 163.19,
+   "min": -0.5,
+   "max": 272.04
+  },
+  {
+   "fecha": "2026-11-02",
+   "periodos": 96,
+   "precio": 177.06,
+   "media": 170.12,
+   "min": 0.84,
+   "max": 309.1
+  }
+ ],
+ "ranking": [
+  {
+   "puesto": 1,
+   "nombre": "Víctor González",
+   "apuesta": 165.2,
+   "diferencia": -4.92
+  },
+  {
+   "puesto": 2,
+   "nombre": "Imanol Gil Ors",
+   "apuesta": 164.74,
+   "diferencia": -5.38
+  },
+  {
+   "puesto": 3,
+   "nombre": "Javier Calás",
+   "apuesta": 160.33,
+   "diferencia": -9.79
+  },
+  {
+   "puesto": 4,
+   "nombre": "Mahdi",
+   "apuesta": 210.0,
+   "diferencia": 39.88
+  }
+ ]
+}
