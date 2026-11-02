@@ -3,7 +3,7 @@
  "mes_nombre": "Octubre 2026",
  "dias_mes": 31,
  "final": true,
- "actualizado": "02/11/2026 17:10",
+ "actualizado": "02/11/2026 17:19",
  "media": 166.66,
  "dias": [
   {
@@ -3399,9 +3399,146 @@
    "apuesta": 150.51,
    "explicacion": "La media de los últimos 7 días del mes anterior.",
    "diferencia": -16.15
+  },
+  {
+   "nombre": "🤖 Año pasado",
+   "apuesta": 75.78,
+   "explicacion": "La media del mismo mes del año anterior (10/2025).",
+   "diferencia": -90.88
   }
  ],
  "otros_anios": [
+  {
+   "anio": 2025,
+   "media": 75.78,
+   "dias": [
+    {
+     "dia": 1,
+     "precio": 87.08
+    },
+    {
+     "dia": 2,
+     "precio": 86.19
+    },
+    {
+     "dia": 3,
+     "precio": 93.25
+    },
+    {
+     "dia": 4,
+     "precio": 53.1
+    },
+    {
+     "dia": 5,
+     "precio": 24.31
+    },
+    {
+     "dia": 6,
+     "precio": 79.05
+    },
+    {
+     "dia": 7,
+     "precio": 98.65
+    },
+    {
+     "dia": 8,
+     "precio": 99.19
+    },
+    {
+     "dia": 9,
+     "precio": 64.63
+    },
+    {
+     "dia": 10,
+     "precio": 79.22
+    },
+    {
+     "dia": 11,
+     "precio": 73.7
+    },
+    {
+     "dia": 12,
+     "precio": 64.63
+    },
+    {
+     "dia": 13,
+     "precio": 102.36
+    },
+    {
+     "dia": 14,
+     "precio": 108.24
+    },
+    {
+     "dia": 15,
+     "precio": 109.4
+    },
+    {
+     "dia": 16,
+     "precio": 109.88
+    },
+    {
+     "dia": 17,
+     "precio": 107.49
+    },
+    {
+     "dia": 18,
+     "precio": 80.82
+    },
+    {
+     "dia": 19,
+     "precio": 32.78
+    },
+    {
+     "dia": 20,
+     "precio": 41.0
+    },
+    {
+     "dia": 21,
+     "precio": 38.36
+    },
+    {
+     "dia": 22,
+     "precio": 27.51
+    },
+    {
+     "dia": 23,
+     "precio": 23.59
+    },
+    {
+     "dia": 24,
+     "precio": 91.83
+    },
+    {
+     "dia": 25,
+     "precio": 80.9
+    },
+    {
+     "dia": 26,
+     "precio": 51.28
+    },
+    {
+     "dia": 27,
+     "precio": 89.72
+    },
+    {
+     "dia": 28,
+     "precio": 101.52
+    },
+    {
+     "dia": 29,
+     "precio": 104.49
+    },
+    {
+     "dia": 30,
+     "precio": 89.26
+    },
+    {
+     "dia": 31,
+     "precio": 55.79
+    }
+   ],
+   "faltan": []
+  },
   {
    "anio": 2024,
    "media": 68.54,
@@ -3530,7 +3667,8 @@
      "dia": 31,
      "precio": 101.17
     }
-   ]
+   ],
+   "faltan": []
   }
  ]
 }
