@@ -567,7 +567,7 @@ def main():
     except Exception as e:  # noqa: BLE001
         print(f"  AVISO: sin detalle por cuartos de hora: {e}")
     try:
-        extra["otros_anios"] = extras.otros_anios(anio, mes, ahora, datos_del_mes)
+        extra["otros_anios"] = extras.otros_anios(anio, mes, descargar_dia, leer_fichero_omie)
         extra["rivales"] = extras.rivales(anio, mes, ahora, datos_del_mes, extra["otros_anios"])
     except Exception as e:  # noqa: BLE001
         print(f"  AVISO: sin otros años ni rivales: {e}")

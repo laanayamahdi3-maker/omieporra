@@ -1107,7 +1107,9 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     const serie = (lista) => Array.from({ length: m.dias_mes }, (_, i) => { const d = lista.find((x) => x.dia === i + 1); return d ? d.precio : null; });
     const sAnios = [{ nombre: anio + " (media " + eur(m.media) + (m.final ? "" : ", provisional") + ")", color: colores[0],
       valores: serie(m.dias.map((d) => ({ dia: Number(d.fecha.slice(8)), precio: d.precio }))) }]
-      .concat(otros.slice(0, 2).map((o, i) => ({ nombre: o.anio + " (media " + eur(o.media) + ")", color: colores[i + 1], valores: serie(o.dias) })));
+      .concat(otros.slice(0, 2).map((o, i) => ({
+        nombre: o.anio + " (media " + eur(o.media) + ((o.faltan || []).length ? ", faltan " + o.faltan.length + " días" : "") + ")",
+        color: colores[i + 1], valores: serie(o.dias) })));
     leyenda(cont, sAnios);
     const g2 = el("div", "grafica"); cont.append(g2);
     graficaLineas(g2, Array.from({ length: m.dias_mes }, (_, i) => String(i + 1)), sAnios, 5, "Precio diario del mismo mes en varios años");

@@ -6,11 +6,19 @@ Todo es opcional: omieporra.py llama a estas funciones dentro de try/except, as�
 que si algo falla aquí la actualización diaria sigue funcionando igual.
 """
 
+import calendar
 from datetime import date
 from pathlib import Path
 
+import requests
+
 CARPETA_DATOS = Path("datos")
 DIAS_TENDENCIA = 7  # «últimos 7 días» del mes anterior
+MAX_DIAS_QUE_FALTAN = 3  # en un año anterior, se acepta el mes si faltan como mucho 3 días
+URL_VERSION = (
+    "https://www.omie.es/es/file-download?parents%5B0%5D=marginalpdbc"
+    "&filename=marginalpdbc_{fecha}.{version}"
+)
 
 
 # ---------------------------------------------------------------- precios por cuarto de hora
@@ -85,25 +93,64 @@ def mes_anterior(anio, mes):
     return (anio - 1, 12) if mes == 1 else (anio, mes - 1)
 
 
-def otros_anios(anio, mes, ahora, datos_del_mes, cuantos=2):
+def otra_version(dia):
+    """Si OMIE no tiene el fichero .1 de un día, prueba las versiones corregidas .2 y .3."""
+    for version in (2, 3):
+        cache = CARPETA_DATOS / f"marginalpdbc_{dia:%Y%m%d}.{version}"
+        if cache.exists():
+            return cache.read_text(encoding="latin-1")
+        try:
+            r = requests.get(URL_VERSION.format(fecha=f"{dia:%Y%m%d}", version=version), timeout=30)
+        except requests.RequestException:
+            return None
+        texto = r.content.decode("latin-1") if r.status_code == 200 else ""
+        if texto.lstrip().upper().startswith("MARGINALPDBC"):
+            CARPETA_DATOS.mkdir(exist_ok=True)
+            cache.write_text(texto, encoding="latin-1")
+            print(f"  descargado marginalpdbc_{dia:%Y%m%d}.{version} (versión corregida)")
+            return texto
+    return None
+
+
+def mes_de_otro_anio(anio, mes, descargar_dia, leer_precios):
+    """Precio medio de cada día de un mes pasado, aceptando que falte algún día suelto."""
+    sesion = requests.Session()
+    sesion.headers["User-Agent"] = "omieporra (GitHub Actions, uso educativo)"
+    dias, faltan = [], []
+    for d in range(1, calendar.monthrange(anio, mes)[1] + 1):
+        dia = date(anio, mes, d)
+        try:
+            texto = descargar_dia(dia, sesion) or otra_version(dia)
+            precios = leer_precios(texto, dia) if texto else None
+        except Exception:  # noqa: BLE001 - un día raro no debe tumbar el mes
+            precios = None
+        if not precios:
+            faltan.append(d)
+            continue
+        dias.append({"dia": d, "precio": round(sum(precios) / len(precios), 2)})
+    return dias, faltan
+
+
+def otros_anios(anio, mes, descargar_dia, leer_precios, cuantos=2):
     """El mismo mes de los años anteriores (precio medio de cada día y media del mes).
-    Si un año no se puede descargar, se salta con un aviso."""
+    Si a un año le faltan demasiados días, se salta con un aviso."""
     resultado = []
     for atras in range(1, cuantos + 1):
         try:
-            tabla = datos_del_mes(anio - atras, mes, ahora)
+            dias, faltan = mes_de_otro_anio(anio - atras, mes, descargar_dia, leer_precios)
         except Exception as e:  # noqa: BLE001 - nunca debe parar la actualización diaria
             print(f"  AVISO: no se ha podido obtener {mes:02d}/{anio - atras}: {e}")
             continue
-        if tabla.empty:
+        if not dias or len(faltan) > MAX_DIAS_QUE_FALTAN:
+            print(f"  AVISO: {mes:02d}/{anio - atras} se omite: faltan los días {faltan[:10]}")
             continue
+        if faltan:
+            print(f"  AVISO: a {mes:02d}/{anio - atras} le faltan los días {faltan}; la media usa los demás")
         resultado.append({
             "anio": anio - atras,
-            "media": round(float(tabla["Media acumulada (€/MWh)"].iloc[-1]), 2),
-            "dias": [
-                {"dia": f["Fecha"].day, "precio": float(f["Precio medio diario (€/MWh)"])}
-                for _, f in tabla.iterrows()
-            ],
+            "media": round(sum(d["precio"] for d in dias) / len(dias), 2),
+            "dias": dias,
+            "faltan": faltan,
         })
     return resultado
 
