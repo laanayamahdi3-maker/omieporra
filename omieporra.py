@@ -27,6 +27,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import extras  # cálculos opcionales para la web (si fallan, no paran nada)
 import matplotlib
 
 matplotlib.use("Agg")  # sin ventana: necesario en GitHub Actions
@@ -244,6 +245,13 @@ def leer_formulario(url):
             f"Preguntas encontradas: {list(df.columns)}"
         )
 
+    def columna_opcional(*claves):
+        for k in claves:
+            for c in df.columns:
+                if k in c.lower():
+                    return c
+        return None
+
     tabla = pd.DataFrame({
         "envio": df[df.columns[0]],  # Google pone siempre la marca temporal primero
         "nombre": df[columna("nombre")].fillna("").str.strip(),
@@ -255,13 +263,19 @@ def leer_formulario(url):
     mes_primero = (pd.to_numeric(partes[1], errors="coerce") > 12).any()
     tabla["fecha_envio"] = pd.to_datetime(tabla["envio"], dayfirst=not mes_primero, errors="coerce")
     tabla["mes"] = tabla["mes_texto"].map(a_mes)
+    # Preguntas opcionales: si el formulario no las tiene, quedan vacías
+    col_argumento = columna_opcional("por qué", "por que", "argumento")
+    col_margen = columna_opcional("margen")
+    tabla["argumento"] = (df[col_argumento].fillna("").str.strip().str.slice(0, 300)
+                          if col_argumento else "")
+    tabla["margen"] = a_numero(df[col_margen]).abs() if col_margen else float("nan")
 
     malas = tabla[tabla["fecha_envio"].isna() | tabla["mes"].isna()
                   | tabla["prediccion"].isna() | (tabla["nombre"] == "")]
     for _, f in malas.iterrows():
         print(f"  AVISO: respuesta ignorada (datos incompletos o no válidos): "
               f"{f['nombre']!r}, mes {f['mes_texto']!r}, envío {f['envio']!r}")
-    return tabla.drop(malas.index)[["fecha_envio", "nombre", "mes", "prediccion"]]
+    return tabla.drop(malas.index)[["fecha_envio", "nombre", "mes", "prediccion", "argumento", "margen"]]
 
 
 def apuestas_del_mes(formulario, etiqueta):
@@ -275,7 +289,8 @@ def apuestas_del_mes(formulario, etiqueta):
         print(f"  AVISO: apuesta de {f['nombre']} enviada tarde ({f['fecha_envio']:%d/%m/%Y}), no cuenta")
     validas = validas.assign(clave=validas["nombre"].str.lower().str.split().str.join(" "))
     validas = validas.sort_values("fecha_envio").drop_duplicates("clave", keep="last")
-    return validas[["nombre", "prediccion"]].reset_index(drop=True)
+    columnas = [c for c in ["nombre", "prediccion", "argumento", "margen"] if c in validas.columns]
+    return validas[columnas].reset_index(drop=True)
 
 
 def leer_apuestas(fichero=FICHERO_APUESTAS):
@@ -293,9 +308,14 @@ def leer_apuestas(fichero=FICHERO_APUESTAS):
             f"{fichero} debe tener las columnas 'nombre;prediccion'. "
             f"Columnas encontradas: {list(df.columns)}"
         )
-    df = df[["nombre", "prediccion"]].dropna(how="all")
+    opcionales = [c for c in ["argumento", "margen"] if c in df.columns]
+    df = df[["nombre", "prediccion"] + opcionales].dropna(how="all", subset=["nombre", "prediccion"])
     df["nombre"] = df["nombre"].str.strip()
     df["prediccion"] = a_numero(df["prediccion"])
+    if "argumento" in df.columns:
+        df["argumento"] = df["argumento"].fillna("").str.strip().str.slice(0, 300)
+    if "margen" in df.columns:
+        df["margen"] = a_numero(df["margen"]).abs()
     malas = df[df["prediccion"].isna()]
     if not malas.empty:
         raise ErrorOmie(
@@ -370,7 +390,20 @@ def nombre_mes(etiqueta):
     return f"{MESES[mes - 1].capitalize()} {anio}"
 
 
-def guardar_resultado(tabla_ranking, tabla_datos, etiqueta, ahora):
+def info_extra(apuestas):
+    """Argumento y margen de cada apuesta, por nombre (si los hay)."""
+    info = {}
+    for _, f in apuestas.iterrows():
+        datos = {}
+        if isinstance(f.get("argumento"), str) and f["argumento"]:
+            datos["argumento"] = f["argumento"]
+        if pd.notna(f.get("margen", float("nan"))):
+            datos["margen"] = round(float(f["margen"]), 2)
+        info[str(f["nombre"])] = datos
+    return info
+
+
+def guardar_resultado(tabla_ranking, tabla_datos, etiqueta, ahora, extra=None):
     """Guarda resultados/AAAA-MM.json: lo usa la web para el historial."""
     anio, mes = map(int, etiqueta.split("-"))
     dias_mes = calendar.monthrange(anio, mes)[1]
@@ -402,6 +435,16 @@ def guardar_resultado(tabla_ranking, tabla_datos, etiqueta, ahora):
             for _, f in tabla_ranking.iterrows()
         ],
     }
+    # Datos opcionales para la web (cuartos de hora, Portugal, rivales, otros años, argumentos)
+    extra = extra or {}
+    for d in resultado["dias"]:
+        d.update(extra.get("detalle", {}).get(d["fecha"], {}))
+    for f in resultado["ranking"]:
+        f.update(extra.get("apuestas", {}).get(f["nombre"], {}))
+    for r in extra.get("rivales", []):
+        r["diferencia"] = round(r["apuesta"] - resultado["media"], 2)
+    resultado["rivales"] = extra.get("rivales", [])
+    resultado["otros_anios"] = extra.get("otros_anios", [])
     CARPETA_RESULTADOS.mkdir(exist_ok=True)
     (CARPETA_RESULTADOS / f"{etiqueta}.json").write_text(
         json.dumps(resultado, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -414,6 +457,7 @@ def pagina_web(resultado, proximo, apuestas_proximo, carpeta=Path("web")):
     carpeta.mkdir(exist_ok=True)
     historial = []
     meses = []  # precios de cada día de todos los meses, para la tabla de la web
+    todos = []  # todos los resultados, para la clasificación general
     for fichero in sorted(CARPETA_RESULTADOS.glob("*.json"), reverse=True):
         r = json.loads(fichero.read_text(encoding="utf-8"))
         if r["mes"] == resultado["mes"]:
@@ -440,7 +484,9 @@ def pagina_web(resultado, proximo, apuestas_proximo, carpeta=Path("web")):
             "media": r["media"],
             "dias_mes": r["dias_mes"],
             "dias": r["dias"],
+            "otros_anios": r.get("otros_anios", []),
         })
+        todos.append(r)
 
     anio, mes = map(int, proximo.split("-"))
     datos = dict(resultado)
@@ -449,13 +495,19 @@ def pagina_web(resultado, proximo, apuestas_proximo, carpeta=Path("web")):
         "proximo_nombre": nombre_mes(proximo),
         "cierre_proximo": datetime(anio, mes, 1, tzinfo=ZONA).isoformat(),
         "apuestas_proximo": [
-            {"nombre": str(f["nombre"]), "apuesta": float(f["prediccion"])}
+            {"nombre": str(f["nombre"]), "apuesta": float(f["prediccion"]),
+             **({"argumento": f["argumento"]} if isinstance(f.get("argumento"), str) and f["argumento"] else {})}
             for _, f in apuestas_proximo.iterrows()
         ],
         "formulario": URL_FORMULARIO_APOSTAR,
         "historial": historial,
         "meses": meses,
+        "general": [],
     })
+    try:
+        datos["general"] = extras.clasificacion_general(todos)
+    except Exception as e:  # noqa: BLE001 - lo extra nunca para la web
+        print(f"  AVISO: sin clasificación general: {e}")
     # "<\/" evita que un nombre con "</script>" rompa la página
     json_datos = json.dumps(datos, ensure_ascii=False).replace("</", "<\\/")
     plantilla = PLANTILLA_WEB.read_text(encoding="utf-8")
@@ -502,13 +554,24 @@ def main():
     if tabla.empty:
         raise ErrorOmie(f"Todavía no hay ningún dato de OMIE para {etiqueta}.")
     media = tabla["Media acumulada (€/MWh)"].iloc[-1]
-    tabla_ranking = ranking(apuestas, media)
+    tabla_ranking = ranking(apuestas[["nombre", "prediccion"]], media)
 
     png = Path(f"omieporra_{etiqueta}.png")
     xlsx = Path(f"omieporra_{etiqueta}.xlsx")
     grafica(tabla, apuestas, etiqueta, png)
     excel(tabla_ranking, tabla, png, xlsx)
-    resultado = guardar_resultado(tabla_ranking, tabla, etiqueta, ahora)
+    # Extras para la web: si algo falla, se avisa y se sigue como siempre
+    extra = {"apuestas": info_extra(apuestas)}
+    try:
+        extra["detalle"] = extras.detalle_de_dias(extras.fechas_de(tabla))
+    except Exception as e:  # noqa: BLE001
+        print(f"  AVISO: sin detalle por cuartos de hora: {e}")
+    try:
+        extra["otros_anios"] = extras.otros_anios(anio, mes, ahora, datos_del_mes)
+        extra["rivales"] = extras.rivales(anio, mes, ahora, datos_del_mes, extra["otros_anios"])
+    except Exception as e:  # noqa: BLE001
+        print(f"  AVISO: sin otros años ni rivales: {e}")
+    resultado = guardar_resultado(tabla_ranking, tabla, etiqueta, ahora, extra)
     pagina_web(resultado, proximo, apuestas_proximo)
 
     print(f"\nDías con datos: {len(tabla)} (último: {tabla['Fecha'].iloc[-1]})")
