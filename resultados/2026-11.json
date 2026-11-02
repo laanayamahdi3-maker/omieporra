@@ -3,7 +3,7 @@
  "mes_nombre": "Noviembre 2026",
  "dias_mes": 30,
  "final": false,
- "actualizado": "02/11/2026 15:50",
+ "actualizado": "02/11/2026 16:46",
  "media": 175.58,
  "dias": [
   {
@@ -35,26 +35,32 @@
   {
    "puesto": 1,
    "nombre": "Víctor González",
-   "apuesta": 165.2,
-   "diferencia": -10.38
+   "apuesta": 175.53,
+   "diferencia": -0.05
   },
   {
    "puesto": 2,
-   "nombre": "Imanol Gil Ors",
-   "apuesta": 164.74,
-   "diferencia": -10.84
+   "nombre": "Julián",
+   "apuesta": 184.36,
+   "diferencia": 8.78
   },
   {
    "puesto": 3,
-   "nombre": "Javier Calás",
-   "apuesta": 160.33,
-   "diferencia": -15.25
+   "nombre": "Mahdi",
+   "apuesta": 185.0,
+   "diferencia": 9.42
   },
   {
    "puesto": 4,
-   "nombre": "Mahdi",
-   "apuesta": 210.0,
-   "diferencia": 34.42
+   "nombre": "Imanol Gil Ors",
+   "apuesta": 157.26,
+   "diferencia": -18.32
+  },
+  {
+   "puesto": 5,
+   "nombre": "Javier Calás",
+   "apuesta": 215.67,
+   "diferencia": 40.09
   }
  ]
 }
