@@ -25,6 +25,8 @@
   --arriba: #e34948;
   --sel: rgba(235, 104, 52, 0.10);
   --good: #006300;
+  --s3: #1baf7a;
+  --q0: #cde2fb; --q1: #9ec5f4; --q2: #6da7ec; --q3: #3987e5; --q4: #256abf; --q5: #184f95; --q6: #0d366b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -45,6 +47,8 @@
     --arriba: #e66767;
     --sel: rgba(217, 89, 38, 0.16);
     --good: #0ca30c;
+    --s3: #199e70;
+    --q0: #0d366b; --q1: #184f95; --q2: #256abf; --q3: #3987e5; --q4: #6da7ec; --q5: #9ec5f4; --q6: #cde2fb;
   }
 }
 :root[data-theme="dark"] {
@@ -65,6 +69,8 @@
   --arriba: #e66767;
   --sel: rgba(217, 89, 38, 0.16);
   --good: #0ca30c;
+  --s3: #199e70;
+  --q0: #0d366b; --q1: #184f95; --q2: #256abf; --q3: #3987e5; --q4: #6da7ec; --q5: #9ec5f4; --q6: #cde2fb;
 }
 
 * { box-sizing: border-box; }
@@ -217,6 +223,25 @@ th[aria-sort="descending"] .orden::after { content: " ↓"; color: var(--ink); }
 .precio .b span { display: block; height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; }
 .etq { display: inline-block; margin-left: 8px; border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; font-size: 0.75rem; color: var(--ink-2); }
 
+/* Apartados nuevos */
+h3 { font-size: 1rem; margin: 20px 0 4px; }
+.tabla-simple tbody tr { cursor: default; }
+.lista { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; }
+.muted { color: var(--muted); }
+.argumento { display: block; color: var(--ink-2); font-size: 0.82rem; font-style: italic; margin-top: 2px; }
+.mapa { display: grid; grid-template-columns: 28px repeat(24, minmax(14px, 1fr)); gap: 2px; min-width: 420px; margin-top: 8px; }
+.mapa .eje { font-size: 0.7rem; color: var(--muted); text-align: center; }
+.mapa .eje.dia { text-align: right; padding-right: 4px; }
+.celda { display: block; height: 14px; border-radius: 2px; background: var(--grid); }
+.q0 { background: var(--q0); } .q1 { background: var(--q1); } .q2 { background: var(--q2); } .q3 { background: var(--q3); }
+.q4 { background: var(--q4); } .q5 { background: var(--q5); } .q6 { background: var(--q6); }
+.escala { display: flex; align-items: center; gap: 2px; margin-top: 8px; font-size: 0.8rem; }
+.escala .celda { width: 22px; }
+.escala .muted { margin: 0 6px; }
+.fuentes, .glosario { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.fuentes li, .glosario li { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--page); }
+.fuentes b, .glosario b { display: block; }
+
 footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 28px; }
 
 @media (max-width: 720px) {
@@ -305,6 +330,49 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     <div class="pestanas" id="pestanas-meses" role="group" aria-label="Mes"></div>
     <p class="sub" id="resumen-mes" style="margin-top: 12px"></p>
     <div class="tabla-scroll"><table class="tabla-precios" id="tabla-precios"></table></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-asi-va">
+    <h2 id="h-asi-va">Así va el mes</h2>
+    <div id="asi-va"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-detalle">
+    <h2 id="h-detalle">Entender el precio</h2>
+    <p class="sub">Por qué el precio sube o baja: la curva del día, el mapa de calor, España frente a Portugal y el mismo mes en otros años.</p>
+    <div class="pestanas" id="pestanas-detalle" role="group" aria-label="Mes"></div>
+    <div id="detalle-mes"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-general">
+    <h2 id="h-general">Clasificación general</h2>
+    <div id="general"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-fuentes">
+    <h2 id="h-fuentes">Fuentes para informarse antes de apostar</h2>
+    <ul class="fuentes">
+      <li><b><a href="https://www.omie.es/" target="_blank" rel="noopener">OMIE</a></b>Precios oficiales del mercado diario. Es la fuente de esta porra.</li>
+      <li><b><a href="https://www.esios.ree.es/" target="_blank" rel="noopener">REE · eSios</a></b>Demanda y generación por tecnología (eólica, solar, hidráulica, gas…), con previsiones.</li>
+      <li><b><a href="https://www.mibgas.es/" target="_blank" rel="noopener">MIBGAS</a></b>Precio del gas en el mercado ibérico. En las horas caras suele marcar el precio de la luz.</li>
+      <li><b><a href="https://www.aemet.es/" target="_blank" rel="noopener">AEMET</a></b>Previsión de viento, sol y lluvia: más renovable suele significar precios más bajos.</li>
+      <li><b><a href="https://www.omip.pt/" target="_blank" rel="noopener">OMIP</a></b>Mercado de futuros: lo que el mercado espera que cueste la luz en los próximos meses.</li>
+      <li><b><a href="https://www.ree.es/" target="_blank" rel="noopener">Red Eléctrica (REE)</a></b>Estadísticas e informes del sistema eléctrico y sus notas de prensa.</li>
+    </ul>
+  </section>
+
+  <section class="card" aria-labelledby="h-glosario">
+    <h2 id="h-glosario">Glosario</h2>
+    <ul class="glosario">
+      <li><b>Mercado diario</b>Subasta de OMIE en la que se fija, el día antes, el precio de la electricidad de cada periodo del día siguiente.</li>
+      <li><b>Periodos de 15 minutos</b>Desde octubre de 2025 el mercado diario fija 96 precios al día, uno por cuarto de hora (antes eran 24, uno por hora).</li>
+      <li><b>Precio marginal</b>Todas las ofertas aceptadas cobran el precio de la última que hace falta para cubrir la demanda de ese periodo, que es la más cara.</li>
+      <li><b>Por qué el gas marca el precio</b>Cuando las renovables, la nuclear y la hidráulica no cubren toda la demanda, entran las centrales de gas, que suelen ser las más caras y fijan el precio marginal.</li>
+      <li><b>Precio 0 o negativo</b>Con mucha solar o eólica y poca demanda sobran ofertas baratas, y el precio cae a cero o incluso por debajo.</li>
+      <li><b>España y Portugal</b>Si la interconexión entre los dos países tiene capacidad suficiente, el precio es el mismo; si se satura, los precios se separan.</li>
+      <li><b>Media acumulada</b>Media de los precios diarios desde el día 1 hasta el último día con datos. Es lo que se compara con las apuestas.</li>
+      <li><b>€/MWh</b>1 MWh son 1.000 kWh: 160 €/MWh equivalen a 0,16 €/kWh (solo la energía, sin peajes ni impuestos).</li>
+    </ul>
   </section>
 
   <footer>
@@ -407,7 +475,9 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     R.forEach((r) => {
       const tr = el("tr");
       tr.tabIndex = 0;
-      tr.append(el("td", "num", r.puesto + "º"), el("td", null, r.nombre), el("td", "r num", eur(r.apuesta)));
+      const celdaNombre = el("td", null, r.nombre);
+      if (r.argumento) celdaNombre.append(el("span", "argumento", "«" + r.argumento + "»"));
+      tr.append(el("td", "num", r.puesto + "º"), celdaNombre, el("td", "r num", eur(r.apuesta)));
       const td = el("td", "r");
       const dif = el("div", "dif");
       const barra = el("div", "barra ocultar-movil");
@@ -689,7 +759,7 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
       const cy = m.t + fila * i + fila / 2;
       const g = s("g", {}, svgProx);
       const titulo = s("title", {}, g);
-      titulo.textContent = a.nombre + ": " + eur(a.apuesta) + " €/MWh";
+      titulo.textContent = a.nombre + ": " + eur(a.apuesta) + " €/MWh" + (a.argumento ? " · «" + a.argumento + "»" : "");
       s("rect", { x: 0, y: cy - fila / 2, width: W, height: fila, fill: "transparent" }, g);
       const nom = s("text", { x: m.l - 10, y: cy + 4, "text-anchor": "end", fill: "var(--ink)", "font-size": 13 }, g);
       // Recorta el nombre con "…" si no cabe en el margen izquierdo
@@ -704,6 +774,13 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     });
   }
   dibujarProximo();
+  const conArgumento = AP.filter((a) => a.argumento);
+  if (conArgumento.length) {
+    const ul = el("ul", "lista");
+    conArgumento.forEach((a) => { const li = el("li"); li.append(el("b", null, a.nombre + ": "), "«" + a.argumento + "»"); ul.append(li); });
+    chips.after(ul);
+    ul.before(el("p", "sub", "Sus argumentos:"));
+  }
 
   // ---------- Historial
   D.historial.forEach((h) => {
@@ -786,6 +863,282 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     t.append(thead, tb);
   }
   pintarPrecios();
+
+  // ======================================================================
+  // APARTADOS NUEVOS (todo opcional: si faltan datos, solo se avisa)
+  // ======================================================================
+  const humanos = R;
+  const pct = new Intl.NumberFormat("es-ES", { style: "percent", maximumFractionDigits: 0 });
+  const horaDe = (i) => String(Math.floor(i / 4)).padStart(2, "0") + ":" + String((i % 4) * 15).padStart(2, "0");
+  const vacio = (padre, texto) => padre.append(el("p", "sub", texto));
+
+  // Gráfica de líneas sencilla con línea guía y recuadro al pasar el ratón o el dedo
+  function graficaLineas(caja, etiquetas, series, cadaX, descripcion) {
+    caja.innerHTML = "";
+    const valores = series.flatMap((se) => se.valores.filter((v) => v !== null && v !== undefined));
+    if (!valores.length) { vacio(caja, "Todavía no hay datos."); return; }
+    const W = caja.clientWidth || 640;
+    const H = W < 500 ? 220 : 280;
+    const m = { l: 44, r: 12, t: 12, b: 26 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const lo = Math.min(0, ...valores);
+    let hi = Math.max(...valores) * 1.05;
+    if (hi - lo < 1) hi = lo + 1;
+    const ticks = pasos(lo, hi, 5);
+    const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+    const n = etiquetas.length;
+    const x = (i) => m.l + (n === 1 ? iw / 2 : (iw * i) / (n - 1));
+    const y = (v) => m.t + ih - ((v - y0) / (y1 - y0)) * ih;
+    const svg = s("svg", { viewBox: "0 0 " + W + " " + H, height: H, role: "img", "aria-label": descripcion });
+    ticks.forEach((v) => {
+      s("line", { x1: m.l, x2: m.l + iw, y1: y(v), y2: y(v), stroke: v === 0 ? "var(--axis)" : "var(--grid)", "stroke-width": 1 }, svg);
+      const t = s("text", { x: m.l - 8, y: y(v) + 4, "text-anchor": "end", fill: "var(--muted)", "font-size": 12, class: "num" }, svg);
+      t.textContent = v.toLocaleString("es-ES");
+    });
+    const salto = W < 500 ? cadaX * 2 : cadaX; // en el móvil, menos etiquetas para que no se monten
+    etiquetas.forEach((e, i) => {
+      if (i % salto !== 0) return;
+      const t = s("text", { x: x(i), y: H - 8, "text-anchor": "middle", fill: "var(--muted)", "font-size": 12 }, svg);
+      t.textContent = e;
+    });
+    series.forEach((se) => {
+      let d = "", dentro = false;
+      se.valores.forEach((v, i) => {
+        if (v === null || v === undefined) { dentro = false; return; }
+        d += (dentro ? "L" : "M") + x(i) + "," + y(v);
+        dentro = true;
+      });
+      s("path", { d, fill: "none", stroke: se.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    });
+    const cruz = s("line", { y1: m.t, y2: m.t + ih, stroke: "var(--axis)", "stroke-width": 1, visibility: "hidden" }, svg);
+    const zona = s("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" }, svg);
+    caja.append(svg);
+    const tip = el("div", "tooltip");
+    caja.append(tip);
+    const mostrar = (e) => {
+      const r = svg.getBoundingClientRect();
+      const px = (e.clientX - r.left) * (W / r.width);
+      const i = Math.max(0, Math.min(n - 1, Math.round(((px - m.l) / iw) * (n - 1))));
+      cruz.setAttribute("x1", x(i)); cruz.setAttribute("x2", x(i)); cruz.setAttribute("visibility", "visible");
+      tip.innerHTML = "";
+      tip.append(el("div", "t", etiquetas[i]));
+      series.forEach((se) => {
+        const v = se.valores[i];
+        if (v === null || v === undefined) return;
+        const f = el("div", "fila"); const k = el("i", "key"); k.style.background = se.color;
+        f.append(k, el("b", null, eur(v) + " €/MWh"), el("span", null, se.nombre)); tip.append(f);
+      });
+      tip.style.display = "block";
+      const izq = x(i) + 12 + tip.offsetWidth > W ? x(i) - tip.offsetWidth - 12 : x(i) + 12;
+      tip.style.left = Math.max(0, izq) + "px"; tip.style.top = m.t + "px";
+    };
+    zona.addEventListener("pointermove", mostrar);
+    zona.addEventListener("pointerdown", mostrar);
+    zona.addEventListener("pointerleave", () => { cruz.setAttribute("visibility", "hidden"); tip.style.display = "none"; });
+  }
+
+  function leyenda(padre, series) {
+    const l = el("div", "leyenda");
+    series.forEach((se) => { const sp = el("span"); const i = el("i", "linea"); i.style.background = se.color; sp.append(i, se.nombre); l.append(sp); });
+    padre.append(l);
+  }
+
+  // ---------- Así va el mes: lo que necesita cada uno, rivales y carrera
+  (function () {
+    const caja = $("asi-va");
+    if (!humanos.length) { vacio(caja, "Este mes no hay apuestas."); return; }
+    const N = D.dias_mes, n = dias.length, quedan = N - n;
+
+    // Lo que necesita cada uno (o, si el mes ha terminado, si acertó con su margen)
+    caja.append(el("h3", null, D.final ? "¿Quién acertó con su margen?" : "Lo que necesita cada uno"));
+    caja.append(el("p", "sub", D.final ? "El mes ha terminado." :
+      "Precio medio al que tendrían que salir los " + quedan + " días que quedan para que la media del mes acabe justo en tu apuesta."));
+    const t = el("table", "tabla-simple"); const h = el("tr");
+    ["Nombre", "Apuesta", "Margen", D.final ? "Resultado" : "Necesita el resto del mes"].forEach((c, i) => h.append(el("th", i ? "r" : "", c)));
+    const thead = el("thead"); thead.append(h); const tb = el("tbody");
+    humanos.forEach((r) => {
+      const tr = el("tr");
+      tr.append(el("td", null, r.nombre), el("td", "r num", eur(r.apuesta)));
+      const dentro = r.margen !== undefined && Math.abs(r.diferencia) <= r.margen;
+      tr.append(el("td", "r num", r.margen === undefined ? "—" : "±" + eur(r.margen) + (dentro ? " ✓" : " ✗")));
+      if (D.final) {
+        tr.append(el("td", "r", r.margen === undefined ? "Sin margen" : dentro ? "Dentro de su margen" : "Fuera de su margen"));
+      } else {
+        const necesita = (r.apuesta * N - D.media * n) / quedan;
+        tr.append(el("td", "r num", necesita < 0 ? "Haría falta un precio negativo" : eur(necesita) + " €/MWh"));
+      }
+      tb.append(tr);
+    });
+    t.append(thead, tb);
+    const w = el("div", "tabla-scroll"); w.append(t); caja.append(w);
+
+    // Rivales automáticos
+    caja.append(el("h3", null, "Rivales automáticos 🤖"));
+    if (!(D.rivales || []).length) {
+      vacio(caja, "Se calcularán en la próxima actualización (necesitan los datos de meses anteriores).");
+    } else {
+      caja.append(el("p", "sub", "Predicciones calculadas solas con lo que se sabía antes de empezar el mes. Si la clase no les gana, algo falla en los argumentos."));
+      const ul = el("ul", "lista");
+      D.rivales.forEach((rv) => {
+        const puesto = humanos.filter((r) => Math.abs(r.diferencia) < Math.abs(rv.diferencia)).length + 1;
+        const li = el("li");
+        li.append(el("b", null, rv.nombre + ": " + eur(rv.apuesta) + " €/MWh"),
+          " · diferencia " + signo(rv.diferencia) + " · iría " + puesto + "º de " + (humanos.length + 1) + ". ",
+          el("span", "muted", rv.explicacion));
+        ul.append(li);
+      });
+      caja.append(ul);
+    }
+
+    // Carrera: quién iba primero cada día
+    caja.append(el("h3", null, "La carrera del mes"));
+    const tramos = [];
+    dias.forEach((d) => {
+      let lider = humanos[0];
+      humanos.forEach((r) => { if (Math.abs(r.apuesta - d.media) < Math.abs(lider.apuesta - d.media)) lider = r; });
+      const ultimo = tramos[tramos.length - 1];
+      if (ultimo && ultimo.nombre === lider.nombre) { ultimo.hasta = d.fecha; ultimo.dias++; }
+      else tramos.push({ nombre: lider.nombre, desde: d.fecha, hasta: d.fecha, dias: 1 });
+    });
+    caja.append(el("p", "sub", "Quién iba primero cada día, comparando las apuestas con la media acumulada de ese día."));
+    const ul = el("ul", "lista");
+    tramos.forEach((tr) => {
+      const li = el("li");
+      li.append(el("span", "num", fecha(tr.desde) + (tr.dias > 1 ? " – " + fecha(tr.hasta) : "") + ": "),
+        el("b", null, tr.nombre), " (" + tr.dias + (tr.dias === 1 ? " día)" : " días)"));
+      ul.append(li);
+    });
+    caja.append(ul);
+  })();
+
+  // ---------- Entender el precio (por mes)
+  const MESES_DETALLE = (D.meses || []).filter((m) => m.dias.some((d) => d.cuartos));
+  let mesDetalle = MESES_DETALLE.length ? MESES_DETALLE[0].mes : null;
+
+  function pintarDetalle() {
+    const pest = $("pestanas-detalle"); pest.innerHTML = "";
+    const cont = $("detalle-mes"); cont.innerHTML = "";
+    if (!MESES_DETALLE.length) { vacio(cont, "Se llenará en la próxima actualización (hacen falta los precios por cuarto de hora)."); return; }
+    MESES_DETALLE.forEach((m) => {
+      const b = el("button", "pestana", m.mes_nombre); b.type = "button";
+      b.setAttribute("aria-pressed", String(m.mes === mesDetalle));
+      b.addEventListener("click", () => { mesDetalle = m.mes; pintarDetalle(); });
+      pest.append(b);
+    });
+    const m = MESES_DETALLE.find((x) => x.mes === mesDetalle);
+    const conCuartos = m.dias.filter((d) => d.cuartos);
+
+    // 1) Curva del día: media de cada cuarto de hora, laborables y fines de semana
+    cont.append(el("h3", null, "La curva del día"));
+    cont.append(el("p", "sub", "Precio medio de cada cuarto de hora del mes. A mediodía suele bajar por la solar y al anochecer sube."));
+    const media = (lista) => {
+      const sumas = Array(96).fill(0), cuenta = Array(96).fill(0);
+      lista.forEach((d) => d.cuartos.forEach((v, i) => { if (v !== null) { sumas[i] += v; cuenta[i]++; } }));
+      return sumas.map((x, i) => (cuenta[i] ? Math.round((x / cuenta[i]) * 100) / 100 : null));
+    };
+    const finde = (d) => [0, 6].includes(new Date(d.fecha + "T12:00:00").getDay());
+    const series = [
+      { nombre: "Laborables", color: "var(--media)", valores: media(conCuartos.filter((d) => !finde(d))) },
+      { nombre: "Fines de semana", color: "var(--apuesta)", valores: media(conCuartos.filter(finde)) },
+    ];
+    const validos = media(conCuartos).map((v, i) => [v, i]).filter(([v]) => v !== null);
+    if (validos.length) {
+      const [vmin, imin] = validos.reduce((a, b) => (b[0] < a[0] ? b : a));
+      const [vmax, imax] = validos.reduce((a, b) => (b[0] > a[0] ? b : a));
+      cont.append(el("p", "sub", "Cuarto de hora más barato de media: " + horaDe(imin) + " (" + eur(vmin) + " €/MWh) · más caro: " + horaDe(imax) + " (" + eur(vmax) + " €/MWh)."));
+    }
+    leyenda(cont, series);
+    const g1 = el("div", "grafica"); cont.append(g1);
+    graficaLineas(g1, Array.from({ length: 96 }, (_, i) => horaDe(i)), series, 12, "Curva media del día en " + m.mes_nombre);
+
+    // 2) Mapa de calor: días × horas
+    cont.append(el("h3", null, "Mapa de calor"));
+    cont.append(el("p", "sub", "Cada fila es un día y cada columna una hora. El color sigue la escala de abajo, de más barato (izquierda) a más caro (derecha). Pasa el ratón o toca una celda para ver el precio."));
+    const filas = conCuartos.map((d) => ({ fecha: d.fecha, horas: Array.from({ length: 24 }, (_, hh) => {
+      const v = d.cuartos.slice(hh * 4, hh * 4 + 4).filter((x) => x !== null);
+      return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+    }) }));
+    const planos = filas.flatMap((f) => f.horas.filter((v) => v !== null));
+    const lo = Math.min(...planos), hi = Math.max(...planos), paso = (hi - lo) / 7 || 1;
+    const nivel = (v) => Math.min(6, Math.floor((v - lo) / paso));
+    const mapa = el("div", "mapa");
+    mapa.append(el("span"));
+    for (let hh = 0; hh < 24; hh++) mapa.append(el("span", "eje", hh % 3 === 0 ? String(hh) : ""));
+    filas.forEach((f) => {
+      mapa.append(el("span", "eje dia", String(Number(f.fecha.slice(8)))));
+      f.horas.forEach((v, hh) => {
+        const c = el("span", "celda" + (v === null ? "" : " q" + nivel(v)));
+        c.title = fecha(f.fecha) + " · " + String(hh).padStart(2, "0") + ":00 · " + (v === null ? "sin dato" : eur(v) + " €/MWh");
+        mapa.append(c);
+      });
+    });
+    const envoltorio = el("div", "tabla-scroll"); envoltorio.append(mapa); cont.append(envoltorio);
+    const escala = el("div", "escala");
+    escala.append(el("span", "muted", eur(lo)));
+    for (let q = 0; q < 7; q++) escala.append(el("span", "celda q" + q));
+    escala.append(el("span", "muted", eur(hi) + " €/MWh"));
+    cont.append(escala);
+
+    // 3) España y Portugal
+    cont.append(el("h3", null, "España y Portugal"));
+    const conPt = m.dias.filter((d) => d.pt !== undefined);
+    if (conPt.length) {
+      const mediaPt = conPt.reduce((a, d) => a + d.pt, 0) / conPt.length;
+      const mediaEs = conPt.reduce((a, d) => a + d.precio, 0) / conPt.length;
+      const distintos = conPt.reduce((a, d) => a + d.distintos, 0);
+      const total = conPt.reduce((a, d) => a + d.periodos_totales, 0);
+      cont.append(el("p", "sub", "Media de España: " + eur(mediaEs) + " €/MWh · Portugal: " + eur(mediaPt) + " €/MWh · " +
+        pct.format(distintos / total) + " de los periodos con precio distinto (cuando se satura la interconexión, los precios se separan)."));
+      const top = [...conPt].filter((d) => Math.abs(d.precio - d.pt) > 0.005)
+        .sort((a, b) => Math.abs(b.precio - b.pt) - Math.abs(a.precio - a.pt)).slice(0, 3);
+      if (top.length) {
+        const ul = el("ul", "lista");
+        top.forEach((d) => ul.append(el("li", null, fecha(d.fecha) + ": España " + eur(d.precio) + " · Portugal " + eur(d.pt) + " €/MWh")));
+        cont.append(el("p", "sub", "Días con más diferencia:"), ul);
+      } else cont.append(el("p", "sub", "Este mes los dos países han tenido el mismo precio medio todos los días."));
+    } else vacio(cont, "Sin datos de Portugal todavía.");
+
+    // 4) El mismo mes en otros años
+    cont.append(el("h3", null, "El mismo mes en otros años"));
+    const otros = m.otros_anios || [];
+    if (!otros.length) { vacio(cont, "Se descargarán en la próxima actualización."); return; }
+    const anio = Number(m.mes.slice(0, 4));
+    const colores = ["var(--media)", "var(--apuesta)", "var(--s3)"];
+    const serie = (lista) => Array.from({ length: m.dias_mes }, (_, i) => { const d = lista.find((x) => x.dia === i + 1); return d ? d.precio : null; });
+    const sAnios = [{ nombre: anio + " (media " + eur(m.media) + (m.final ? "" : ", provisional") + ")", color: colores[0],
+      valores: serie(m.dias.map((d) => ({ dia: Number(d.fecha.slice(8)), precio: d.precio }))) }]
+      .concat(otros.slice(0, 2).map((o, i) => ({ nombre: o.anio + " (media " + eur(o.media) + ")", color: colores[i + 1], valores: serie(o.dias) })));
+    leyenda(cont, sAnios);
+    const g2 = el("div", "grafica"); cont.append(g2);
+    graficaLineas(g2, Array.from({ length: m.dias_mes }, (_, i) => String(i + 1)), sAnios, 5, "Precio diario del mismo mes en varios años");
+  }
+  pintarDetalle();
+
+  // ---------- Clasificación general
+  (function () {
+    const caja = $("general");
+    const G = D.general || [];
+    if (!G.length) { vacio(caja, "Aparecerá cuando termine el primer mes con apuestas."); return; }
+    const t = el("table", "tabla-simple"); const h = el("tr");
+    ["Puesto", "Nombre", "Meses", "Victorias", "Error medio", "Suele…", "Mejor puesto"].forEach((c, i) => h.append(el("th", i > 1 ? "r" : "", c)));
+    const thead = el("thead"); thead.append(h); const tb = el("tbody");
+    G.forEach((g, i) => {
+      const tr = el("tr");
+      tr.append(el("td", "num", (i + 1) + "º"), el("td", null, g.nombre), el("td", "r num", String(g.meses)),
+        el("td", "r num", String(g.victorias)), el("td", "r num", eur(g.error_medio) + " €/MWh"),
+        el("td", "r", Math.abs(g.sesgo) < 1 ? "acertar de media" : g.sesgo > 0 ? "pasarse (" + signo(g.sesgo) + ")" : "quedarse corto (" + signo(g.sesgo) + ")"),
+        el("td", "r num", g.mejor_puesto + "º"));
+      tb.append(tr);
+    });
+    t.append(thead, tb);
+    const w = el("div", "tabla-scroll"); w.append(t); caja.append(w);
+    caja.append(el("p", "sub", "Solo cuentan los meses terminados. Orden: más victorias y, a igualdad, menor error medio."));
+  })();
+
+  // Volver a dibujar las gráficas nuevas si cambia el ancho
+  let anchoNuevo = $("detalle-mes").clientWidth;
+  window.addEventListener("resize", () => { if ($("detalle-mes").clientWidth !== anchoNuevo) { anchoNuevo = $("detalle-mes").clientWidth; pintarDetalle(); } });
+
 
   seleccionar(leer("omieporra-nombre"));
   let ancho = caja.clientWidth;

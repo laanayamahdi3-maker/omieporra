@@ -10,6 +10,7 @@ Este repositorio descarga solo los datos de OMIE todos los días, calcula la med
 | `apuestas.csv` | Reserva: apuestas a mano, solo si un mes no tiene apuestas en el formulario. |
 | `apuestas/AAAA-MM.csv` | Apuestas apuntadas a mano para un mes concreto; mandan sobre el formulario. |
 | `omieporra.py` | El programa que descarga OMIE y calcula todo. |
+| `extras.py` | Cálculos opcionales para la web (curva del día, Portugal, otros años, rivales, clasificación general). |
 | `requirements.txt` | Librerías de Python que necesita el programa. |
 | `.github/workflows/omieporra.yml` | La "tarea automática" de GitHub Actions: se ejecuta cada día a las 14:00 UTC (15:00 en invierno / 16:00 en verano, hora de España). |
 | `datos/` | Ficheros originales de OMIE descargados (uno por día). |
@@ -47,7 +48,19 @@ nombre;prediccion
 Imanol Gil Ors;157,26
 ```
 
-Ese archivo **manda sobre el formulario** solo para ese mes.
+Ese archivo **manda sobre el formulario** solo para ese mes. Puede tener además las columnas opcionales `argumento` y `margen`:
+
+```
+nombre;prediccion;argumento;margen
+Imanol Gil Ors;157,26;Mucha eólica prevista;10
+```
+
+### Argumento y margen (opcional)
+Si añades al formulario estas preguntas opcionales, la web las mostrará:
+- **«¿Por qué apuestas esa cifra?»** (respuesta corta o párrafo): el argumento de cada uno, junto a su apuesta.
+- **«Margen (± €/MWh)»** (respuesta corta, número): la web dice si la media final cae dentro de ese margen.
+
+El título de la primera debe contener «por qué» o «argumento», y el de la segunda, «margen». No uses la palabra «mes» en ninguna de las dos.
 
 ## Ver los resultados
 
@@ -55,6 +68,10 @@ Ese archivo **manda sobre el formulario** solo para ese mes.
   (hoja **Ranking** con la gráfica, y hoja **Datos OMIE** con el precio de cada día).
 - Puesto 1 = la apuesta más cercana a la media acumulada del mes. La clasificación es "provisional" hasta que termina el mes.
 - En la web, el apartado **Precios de cada día** guarda la tabla de todos los días de cada mes (se puede ordenar por cualquier columna).
+- **Así va el mes:** lo que necesita cada uno en los días que quedan, si acertó con su margen, los **rivales automáticos** 🤖 (media del mes anterior, últimos 7 días y mismo mes del año pasado) y quién iba primero cada día.
+- **Entender el precio:** curva del día por cuartos de hora (laborables y fines de semana), mapa de calor por horas, España frente a Portugal y el mismo mes en los dos años anteriores.
+- **Clasificación general** (meses terminados), **fuentes** para informarse y **glosario**.
+- Estos apartados son opcionales: si algo falla (por ejemplo, descargar años anteriores), la actualización sigue igual y solo se avisa en el registro.
 
 ## Ejecutarlo a mano
 
