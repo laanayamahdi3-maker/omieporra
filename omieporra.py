@@ -42,6 +42,8 @@ URL_OMIE = (
 )
 CARPETA_DATOS = Path("datos")
 FICHERO_APUESTAS = Path("apuestas.csv")
+# Apuestas apuntadas a mano para un mes concreto (apuestas/AAAA-MM.csv). Si existe, manda sobre el formulario.
+CARPETA_APUESTAS = Path("apuestas")
 # Enlace CSV de la hoja de respuestas del Google Form (se configura en el workflow).
 URL_FORMULARIO = os.environ.get("APUESTAS_URL", "").strip()
 # Enlace para rellenar el formulario (botón "Apostar ahora" de la web). Opcional.
@@ -276,19 +278,19 @@ def apuestas_del_mes(formulario, etiqueta):
     return validas[["nombre", "prediccion"]].reset_index(drop=True)
 
 
-def leer_apuestas():
-    if not FICHERO_APUESTAS.exists():
-        raise ErrorOmie("No encuentro apuestas.csv en la carpeta del repositorio.")
+def leer_apuestas(fichero=FICHERO_APUESTAS):
+    if not fichero.exists():
+        raise ErrorOmie(f"No encuentro {fichero} en la carpeta del repositorio.")
     for codificacion in ("utf-8-sig", "cp1252"):
         try:
-            df = pd.read_csv(FICHERO_APUESTAS, sep=";", dtype=str, encoding=codificacion)
+            df = pd.read_csv(fichero, sep=";", dtype=str, encoding=codificacion)
             break
         except UnicodeDecodeError:
             continue
     df.columns = [c.strip().lower() for c in df.columns]
     if not {"nombre", "prediccion"} <= set(df.columns):
         raise ErrorOmie(
-            "apuestas.csv debe tener las columnas 'nombre;prediccion'. "
+            f"{fichero} debe tener las columnas 'nombre;prediccion'. "
             f"Columnas encontradas: {list(df.columns)}"
         )
     df = df[["nombre", "prediccion"]].dropna(how="all")
@@ -297,7 +299,7 @@ def leer_apuestas():
     malas = df[df["prediccion"].isna()]
     if not malas.empty:
         raise ErrorOmie(
-            "Hay apuestas que no son un número en apuestas.csv: "
+            f"Hay apuestas que no son un número en {fichero}: "
             + ", ".join(malas["nombre"].fillna("(sin nombre)"))
         )
     return df  # puede estar vacía: entonces el mes sale "sin apuestas"
@@ -411,6 +413,7 @@ def pagina_web(resultado, proximo, apuestas_proximo, carpeta=Path("web")):
     y copia ahí las gráficas y Excels de todos los meses."""
     carpeta.mkdir(exist_ok=True)
     historial = []
+    meses = []  # precios de cada día de todos los meses, para la tabla de la web
     for fichero in sorted(CARPETA_RESULTADOS.glob("*.json"), reverse=True):
         r = json.loads(fichero.read_text(encoding="utf-8"))
         if r["mes"] == resultado["mes"]:
@@ -430,6 +433,14 @@ def pagina_web(resultado, proximo, apuestas_proximo, carpeta=Path("web")):
             "png": f"omieporra_{r['mes']}.png",
             "xlsx": f"omieporra_{r['mes']}.xlsx",
         })
+        meses.append({
+            "mes": r["mes"],
+            "mes_nombre": r["mes_nombre"],
+            "final": r["final"],
+            "media": r["media"],
+            "dias_mes": r["dias_mes"],
+            "dias": r["dias"],
+        })
 
     anio, mes = map(int, proximo.split("-"))
     datos = dict(resultado)
@@ -443,6 +454,7 @@ def pagina_web(resultado, proximo, apuestas_proximo, carpeta=Path("web")):
         ],
         "formulario": URL_FORMULARIO_APOSTAR,
         "historial": historial,
+        "meses": meses,
     })
     # "<\/" evita que un nombre con "</script>" rompa la página
     json_datos = json.dumps(datos, ensure_ascii=False).replace("</", "<\\/")
@@ -475,6 +487,14 @@ def main():
         apuestas_proximo = apuestas_del_mes(formulario, proximo)
         print(f"Formulario: {len(apuestas)} apuestas para {etiqueta}, "
               f"{len(apuestas_proximo)} para {proximo}")
+    # Las apuestas apuntadas a mano para un mes mandan sobre las del formulario
+    manual = CARPETA_APUESTAS / f"{etiqueta}.csv"
+    if manual.exists():
+        print(f"Uso las apuestas apuntadas a mano de {manual}")
+        apuestas = leer_apuestas(manual)
+    manual_proximo = CARPETA_APUESTAS / f"{proximo}.csv"
+    if manual_proximo.exists():
+        apuestas_proximo = leer_apuestas(manual_proximo)
     if apuestas.empty:
         print("Uso las apuestas de apuestas.csv")
         apuestas = leer_apuestas()
