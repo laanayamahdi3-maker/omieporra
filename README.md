@@ -8,6 +8,7 @@ Este repositorio descarga solo los datos de OMIE todos los días, calcula la med
 | Archivo | Para qué sirve |
 |---|---|
 | `apuestas.csv` | Reserva: apuestas a mano, solo si un mes no tiene apuestas en el formulario. |
+| `apuestas/AAAA-MM.csv` | Apuestas apuntadas a mano para un mes concreto; mandan sobre el formulario. |
 | `omieporra.py` | El programa que descarga OMIE y calcula todo. |
 | `requirements.txt` | Librerías de Python que necesita el programa. |
 | `.github/workflows/omieporra.yml` | La "tarea automática" de GitHub Actions: se ejecuta cada día a las 14:00 UTC (15:00 en invierno / 16:00 en verano, hora de España). |
@@ -38,11 +39,22 @@ Cada mes solo tienes que añadir al desplegable "Mes" el mes siguiente.
 
 > `apuestas.csv` sigue funcionando como reserva: se usa si no hay enlace del formulario o si el formulario no tiene apuestas para ese mes.
 
+### Apuestas apuntadas a mano para un mes
+Si las apuestas de un mes se deciden fuera del formulario (por ejemplo, en la pizarra), crea el archivo `apuestas/AAAA-MM.csv` (por ejemplo `apuestas/2026-11.csv`) con el mismo formato:
+
+```
+nombre;prediccion
+Imanol Gil Ors;157,26
+```
+
+Ese archivo **manda sobre el formulario** solo para ese mes.
+
 ## Ver los resultados
 
 - En la página principal del repositorio abre `omieporra_AAAA-MM.png` (se ve directamente) o descarga `omieporra_AAAA-MM.xlsx`
   (hoja **Ranking** con la gráfica, y hoja **Datos OMIE** con el precio de cada día).
 - Puesto 1 = la apuesta más cercana a la media acumulada del mes. La clasificación es "provisional" hasta que termina el mes.
+- En la web, el apartado **Precios de cada día** guarda la tabla de todos los días de cada mes (se puede ordenar por cualquier columna).
 
 ## Ejecutarlo a mano
 

@@ -200,10 +200,28 @@ button.boton { border: 0; font: inherit; font-weight: 600; cursor: pointer; }
 .mes .g { color: var(--ink-2); font-size: 0.88rem; margin-top: 4px; overflow-wrap: anywhere; }
 .mes .links { margin-top: 8px; font-size: 0.88rem; display: flex; gap: 12px; }
 
+/* Precios de cada día */
+.pestanas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.pestana {
+  font: inherit; font-size: 0.88rem; color: var(--ink-2); background: var(--page);
+  border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; cursor: pointer;
+}
+.pestana[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--page); }
+.tabla-precios tbody tr { cursor: default; }
+.orden { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.orden::after { content: " ↕"; color: var(--muted); }
+th[aria-sort="ascending"] .orden::after { content: " ↑"; color: var(--ink); }
+th[aria-sort="descending"] .orden::after { content: " ↓"; color: var(--ink); }
+.precio { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
+.precio .b { width: 90px; height: 8px; flex: none; }
+.precio .b span { display: block; height: 100%; background: var(--bar); border-radius: 0 4px 4px 0; }
+.etq { display: inline-block; margin-left: 8px; border: 1px solid var(--border); border-radius: 6px; padding: 0 6px; font-size: 0.75rem; color: var(--ink-2); }
+
 footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 28px; }
 
 @media (max-width: 720px) {
   .hero { grid-template-columns: 1fr; }
+  .precio .b { display: none; }
   .card { padding: 16px; }
   .barra { width: 64px; }
   .ocultar-movil { display: none; }
@@ -279,6 +297,14 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
   <section class="card" aria-labelledby="h-historial">
     <h2 id="h-historial">Todos los meses</h2>
     <div class="meses" id="historial"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-precios" id="bloque-precios">
+    <h2 id="h-precios">Precios de cada día</h2>
+    <p class="sub">Elige un mes. Pulsa en el nombre de una columna para ordenar la tabla.</p>
+    <div class="pestanas" id="pestanas-meses" role="group" aria-label="Mes"></div>
+    <p class="sub" id="resumen-mes" style="margin-top: 12px"></p>
+    <div class="tabla-scroll"><table class="tabla-precios" id="tabla-precios"></table></div>
   </section>
 
   <footer>
@@ -688,9 +714,78 @@ footer { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top
     const l = el("div", "links");
     const a1 = el("a", null, "Gráfica"); a1.href = h.png;
     const a2 = el("a", null, "Excel"); a2.href = h.xlsx;
-    l.append(a1, a2); c.append(l);
+    const a3 = el("a", null, "Precios"); a3.href = "#bloque-precios";
+    a3.addEventListener("click", () => mostrarMes(h.mes));
+    l.append(a1, a2, a3); c.append(l);
     $("historial").append(c);
   });
+
+  // ---------- Precios de cada día (todos los meses, el más reciente primero)
+  const MESES_DATOS = D.meses || [];
+  const COLUMNAS = [["fecha", "Día"], ["precio", "Precio medio"], ["media", "Media acumulada"], ["min", "Mínimo"], ["max", "Máximo"]];
+  let mesTabla = MESES_DATOS.length ? MESES_DATOS[0].mes : null;
+  let orden = { col: "fecha", dir: 1 };
+
+  function mostrarMes(mes) { mesTabla = mes; pintarPrecios(); }
+
+  function pintarPrecios() {
+    const pest = $("pestanas-meses");
+    pest.innerHTML = "";
+    MESES_DATOS.forEach((m) => {
+      const b = el("button", "pestana", m.mes_nombre);
+      b.type = "button";
+      b.setAttribute("aria-pressed", String(m.mes === mesTabla));
+      b.addEventListener("click", () => mostrarMes(m.mes));
+      pest.append(b);
+    });
+    const m = MESES_DATOS.find((x) => x.mes === mesTabla);
+    const t = $("tabla-precios");
+    t.innerHTML = "";
+    if (!m || !m.dias.length) { $("resumen-mes").textContent = "Todavía no hay datos guardados."; return; }
+
+    const caro = m.dias.reduce((a, b) => (b.precio > a.precio ? b : a));
+    const barato = m.dias.reduce((a, b) => (b.precio < a.precio ? b : a));
+    $("resumen-mes").textContent = (m.final ? "Media final" : "Media hasta ahora") + ": " + eur(m.media) + " €/MWh · " +
+      m.dias.length + " de " + m.dias_mes + " días" + (m.final ? "" : " (provisional)") +
+      " · más caro: " + fecha(caro.fecha) + " (" + eur(caro.precio) + ") · más barato: " + fecha(barato.fecha) + " (" + eur(barato.precio) + ")";
+
+    const thead = el("thead"); const h = el("tr");
+    COLUMNAS.forEach(([clave, nombre], i) => {
+      const th = el("th", i ? "r" : "");
+      th.setAttribute("aria-sort", orden.col === clave ? (orden.dir > 0 ? "ascending" : "descending") : "none");
+      const b = el("button", "orden", nombre);
+      b.type = "button";
+      b.addEventListener("click", () => {
+        orden = { col: clave, dir: orden.col === clave ? -orden.dir : (clave === "fecha" ? 1 : -1) };
+        pintarPrecios();
+      });
+      th.append(b); h.append(th);
+    });
+    thead.append(h);
+
+    const maxPrecio = Math.max(...m.dias.map((d) => d.precio), 0.01);
+    const filas = [...m.dias].sort((a, b) =>
+      orden.col === "fecha" ? orden.dir * a.fecha.localeCompare(b.fecha) : orden.dir * (a[orden.col] - b[orden.col]));
+    const tb = el("tbody");
+    filas.forEach((d) => {
+      const tr = el("tr");
+      const dia = el("td", null, fecha(d.fecha));
+      if (d === caro) dia.append(el("span", "etq", "más caro"));
+      if (d === barato) dia.append(el("span", "etq", "más barato"));
+      tr.append(dia);
+      const tdPrecio = el("td", "r");
+      const celda = el("div", "precio");
+      const barra = el("div", "b"); barra.setAttribute("aria-hidden", "true");
+      const relleno = el("span"); relleno.style.width = Math.max(0, 100 * d.precio / maxPrecio) + "%";
+      barra.append(relleno);
+      celda.append(el("span", "num", eur(d.precio)), barra);
+      tdPrecio.append(celda); tr.append(tdPrecio);
+      [d.media, d.min, d.max].forEach((v) => tr.append(el("td", "r num", eur(v))));
+      tb.append(tr);
+    });
+    t.append(thead, tb);
+  }
+  pintarPrecios();
 
   seleccionar(leer("omieporra-nombre"));
   let ancho = caja.clientWidth;
