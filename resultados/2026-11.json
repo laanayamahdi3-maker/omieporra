@@ -3,8 +3,8 @@
  "mes_nombre": "Noviembre 2026",
  "dias_mes": 30,
  "final": false,
- "actualizado": "03/11/2026 15:45",
- "media": 193.19,
+ "actualizado": "04/11/2026 15:50",
+ "media": 202.29,
  "dias": [
   {
    "fecha": "2026-11-01",
@@ -441,38 +441,147 @@
    "pt": 257.55,
    "distintos": 21,
    "periodos_totales": 96
+  },
+  {
+   "fecha": "2026-11-05",
+   "periodos": 96,
+   "precio": 238.69,
+   "media": 202.29,
+   "min": 182.81,
+   "max": 326.49,
+   "cuartos": [
+    262.24,
+    255.07,
+    250.0,
+    241.6,
+    237.7,
+    232.26,
+    230.89,
+    229.0,
+    227.96,
+    223.82,
+    221.18,
+    220.0,
+    218.55,
+    219.06,
+    216.74,
+    216.74,
+    218.79,
+    219.38,
+    220.0,
+    220.17,
+    221.12,
+    224.0,
+    227.96,
+    230.89,
+    238.5,
+    254.34,
+    263.01,
+    273.38,
+    284.86,
+    295.76,
+    300.0,
+    300.0,
+    300.01,
+    291.29,
+    268.41,
+    225.0,
+    236.74,
+    201.07,
+    190.0,
+    195.42,
+    201.2,
+    199.9,
+    190.8,
+    186.2,
+    190.1,
+    185.8,
+    185.0,
+    184.3,
+    184.0,
+    182.81,
+    183.75,
+    183.46,
+    183.99,
+    185.0,
+    185.0,
+    185.0,
+    185.0,
+    185.25,
+    185.25,
+    185.45,
+    186.2,
+    190.0,
+    190.02,
+    195.01,
+    197.4,
+    201.2,
+    220.0,
+    253.57,
+    201.2,
+    215.0,
+    263.24,
+    284.86,
+    279.0,
+    284.86,
+    305.0,
+    315.0,
+    285.0,
+    300.0,
+    305.0,
+    311.01,
+    318.36,
+    326.49,
+    316.5,
+    308.74,
+    312.77,
+    301.0,
+    298.49,
+    282.98,
+    290.0,
+    280.88,
+    278.83,
+    263.93,
+    265.0,
+    256.65,
+    251.31,
+    239.21
+   ],
+   "pt": 254.12,
+   "distintos": 54,
+   "periodos_totales": 96
   }
  ],
  "ranking": [
   {
    "puesto": 1,
-   "nombre": "Mahdi",
-   "apuesta": 185.0,
-   "diferencia": -8.19
+   "nombre": "Javier Calás",
+   "apuesta": 215.67,
+   "diferencia": 13.38
   },
   {
    "puesto": 2,
-   "nombre": "Julián",
-   "apuesta": 184.36,
-   "diferencia": -8.83
+   "nombre": "Mahdi",
+   "apuesta": 185.0,
+   "diferencia": -17.29
   },
   {
    "puesto": 3,
-   "nombre": "Víctor González",
-   "apuesta": 175.53,
-   "diferencia": -17.66
+   "nombre": "Julián",
+   "apuesta": 184.36,
+   "diferencia": -17.93
   },
   {
    "puesto": 4,
-   "nombre": "Javier Calás",
-   "apuesta": 215.67,
-   "diferencia": 22.48
+   "nombre": "Víctor González",
+   "apuesta": 175.53,
+   "diferencia": -26.76
   },
   {
    "puesto": 5,
    "nombre": "Imanol Gil Ors",
    "apuesta": 157.26,
-   "diferencia": -35.93
+   "diferencia": -45.03
   }
  ],
  "rivales": [
@@ -480,19 +589,19 @@
    "nombre": "🤖 Persistencia",
    "apuesta": 166.66,
    "explicacion": "La media del mes anterior (10/2026).",
-   "diferencia": -26.53
+   "diferencia": -35.63
   },
   {
    "nombre": "🤖 Últimos 7 días",
    "apuesta": 199.68,
    "explicacion": "La media de los últimos 7 días del mes anterior.",
-   "diferencia": 6.49
+   "diferencia": -2.61
   },
   {
    "nombre": "🤖 Año pasado",
    "apuesta": 58.65,
    "explicacion": "La media del mismo mes del año anterior (11/2025).",
-   "diferencia": -134.54
+   "diferencia": -143.64
   }
  ],
  "otros_anios": [
